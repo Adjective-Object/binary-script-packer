@@ -1,0 +1,3 @@
+[submodule "libsweetparse"]
+	path = libsweetparse
+	url = https://github.com/Adjective-Object/libsweetparse

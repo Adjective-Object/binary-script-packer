@@ -1,0 +1,42 @@
+def 
+    0x28 
+    graphic
+    skip6 
+    int4 gfxid
+    skip4
+    int4 zoff
+    int4 yoff
+    int4 xoff
+    int4 zrange
+    int4 yrange
+    int4 xrange
+
+
+def 0x28 graphic
+    skip6
+    int4 gfxid
+    skip4
+    int4 zoff
+    int4 yoff
+    int4 xoff
+    int4 zrange
+    int4 yrange
+    int4 xrange
+
+def 0x28 graphic {
+    skip6 (int4 gfx) skip4
+    (int4 zoff) (int4 yoff) (int4 xoff)
+    (int4 zrange) (int4 yrange) (int4 xrange)
+}
+
+def{ 0x28 graphic
+    skip6 (int4 gfx) skip4
+    (int4 zoff) (int4 yoff) (int4 xoff)
+    (int4 zrange) (int4 yrange) {int4 xrange}
+}
+
+def 0x28 graphic {
+    skip6 int4(gfx) skip4
+    int4(zoff) int4(yoff) int4(xoff)
+    int4(zrange) int4(yrange) int4(xrange)
+}
