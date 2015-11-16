@@ -3,12 +3,15 @@
 
 #include "sweetexpressions.h"
 #include "endian.h"
+#include <stdbool.h>
 
 typedef enum arg_type {
     RAW_STRING, // non null-terminated string
     STRING, // null-terminated string
     INT, // integer
+    UNSIGNED_INT,
     FLOAT, // IEEE float  
+    UNSIGNED_FLOAT,
     SKIP,
     __ARG_TYPE_CT,
 } arg_type;
@@ -40,13 +43,12 @@ typedef struct function_def {
 typedef struct language_def {
     enum endianness target_endianness;
     unsigned int function_name_width; 
+    unsigned int function_name_bitshift; // bitshift applied to fn names
     unsigned int function_ct;
     unsigned int function_capacity;
     function_def ** functions;
 } language_def;
 
-language_def * define_language(FILE * f);
-char * type_name(arg_type t);
-void print_lang(language_def * l);
+language_def * parse_language(FILE * f);
 
 #endif

@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "parsescript.h"
+#include "langdef.h"
 
 int parse_int(char * str) {
     int toret;
@@ -13,15 +14,7 @@ int parse_int(char * str) {
     return toret;
 }
 
-const char * typenames[] = {
-    "raw_str",
-    "str",
-    "int",
-    "float",
-    "skip"
-};
-
-void  get_argument_type(argument_def * argument,
+void  parse_argtype(argument_def * argument,
         swexp_list_node * node) {
     unsigned int i;
     char * name = (char *) node->content;
@@ -52,6 +45,16 @@ void add_fn_to_lang(language_def *l, function_def * def) {
         l->functions = realloc(l->functions, 
                 sizeof(function_def *) * (l->function_ct + 1));
     }
+
+    function_def * old_def;
+    if ((old_def = lang_getfn(l, def->function_binary_value)) != NULL) {
+        printf("tried to add overlapping function definition to language\n");
+        printf("previous function:\n    ");
+        print_fn(l, old_def);
+        printf("new function:\n    ");
+        print_fn(l, def);
+        exit(1);
+    }
     l->functions[l->function_ct] = def;
     l->function_ct ++;
 }
@@ -69,10 +72,29 @@ function_def * parse_fn(language_def * l, swexp_list_node * node) {
     }
 
     // bytecode value
-    // TODO check the size of the byte falls into the provided size
     head = head->next;
-    f->function_binary_value = 
-        parse_int(head->content);
+    if (head->type != ATOM) {
+        printf("first argument to function def is not an atom\n");
+        exit(1);
+    }
+    unsigned int cont = parse_int(head->content),
+        parsed_cont = (cont >> l->function_name_bitshift) 
+            << l->function_name_bitshift;
+    f->function_binary_value = cont >> l->function_name_bitshift;
+    if (parsed_cont != cont) {
+        printf("precision in symbol '%s' lost in bitshift (0x%x ->0x%x)\n",
+               (char*) head->content, cont, parsed_cont);
+        exit(1);
+    }
+    
+    if (!check_size(UNSIGNED_INT, l->function_name_width, 
+                f->function_binary_value)) {
+        printf("function identifier '%s' does not fit in ", 
+                (char *) head->content);
+        printf("name width %d\n", l->function_name_width);
+        exit(1);
+    }
+
     
     // get the name out of the node
     head = head->next;
@@ -94,7 +116,7 @@ function_def * parse_fn(language_def * l, swexp_list_node * node) {
         
         if (head->type == ATOM) {
             // handle the case of a type without a name
-            get_argument_type(argument, head);
+            parse_argtype(argument, head);
         } else if (head->type == LIST) {
             // handle the case of a type/name pair
             if(list_len(head) != 2) {
@@ -103,7 +125,7 @@ function_def * parse_fn(language_def * l, swexp_list_node * node) {
             }
 
             swexp_list_node * lnode = list_head(head);
-            get_argument_type(argument, lnode);
+            parse_argtype(argument, lnode);
             argument->name = lnode->next->content;
         }
     }
@@ -111,7 +133,53 @@ function_def * parse_fn(language_def * l, swexp_list_node * node) {
     return f;
 }
 
-language_def * define_language(FILE * f) {
+void parse_metadata_attr(language_def * l, swexp_list_node * node) {
+    char * name = list_head(node)->content;
+    char * value = list_head(node)->next->content;
+    if (strcmp(name, "endian") == 0
+        || strcmp(name, "endianness") == 0) {
+       if(strcmp(value, "big") == 0
+            || strcmp(value, "Big") == 0
+            || strcmp(value, "BIG") == 0) {
+           l->target_endianness = BIG_ENDIAN;
+       } else if(strcmp(value, "little") == 0
+            || strcmp(value, "Little") == 0
+            || strcmp(value, "LITTLE") == 0) {
+           l->target_endianness = LITTLE_ENDIAN;
+       } else {
+           printf("Unrecognized value %s for endianness declaration\n",
+                   value);
+           printf("only values big/Big/BIG/little/Little/LITTLE are valid");
+       }
+    }
+    else if (strcmp(name, "namewidth") == 0
+        || strcmp(name, "functionwidth") == 0
+        || strcmp(name, "funcwidth") == 0) {
+        l->function_name_width = parse_int(value);
+    }
+    else if (strcmp(name, "nameshift") == 0) {
+        l->function_name_bitshift = parse_int(value);
+    }
+    else {
+        printf("unrecgonized metadata attr '%s'", name);
+        exit(1);
+    }
+}
+
+void parse_metadata(language_def *l, swexp_list_node * metadata_decl) {
+    swexp_list_node * node; 
+    for (node = list_head(metadata_decl)->next; 
+            node != NULL; node=node->next) {
+        if (node->type != LIST) {
+            printf("encountered non-list '%s' in metadata declaration\n",
+                    (char *) node->content);
+            exit(1);
+        }
+        parse_metadata_attr(l, node);
+    }
+}
+
+language_def * parse_language(FILE * f) {
     swexp_list_node * head =  parse_file_to_atoms(f, 255), *current;
 
     language_def * language = malloc(sizeof(language_def));
@@ -120,6 +188,7 @@ language_def * define_language(FILE * f) {
     language->functions = NULL;
 
 
+    // TODO prescan for metadata blocks
     for(current = list_head(head); current != NULL;
         current = current->next) {
         if (current->type == LIST) {
@@ -129,7 +198,11 @@ language_def * define_language(FILE * f) {
                 add_fn_to_lang(language, parse_fn(language, current));
             } else if (strcmp(content, "meta") == 0) {
                 // parse metadata block
-                // parse_metadata(language, current);
+                parse_metadata(language, current);
+                printf("endian=%d, width=%d, bitshift=%d\n",
+                        (int) language->target_endianness,
+                        language->function_name_width,
+                        language->function_name_bitshift);
             } else {
                 printf("unrecognized root level command '%s'\n",
                         content);
@@ -145,30 +218,3 @@ language_def * define_language(FILE * f) {
     return language;
 } 
 
-char * type_name(arg_type t) {
-    switch(t) {
-        case RAW_STRING:    return "rawstr";
-        case STRING:        return "str";
-        case INT:           return "int";
-        case FLOAT:         return "float";
-        case SKIP:          return "skip";
-        default:            return "??";
-    }
-}
-
-void print_lang(language_def * l) {
-    for (unsigned int i=0; i < l->function_ct; i++) {
-        function_def * f = l->functions[i];
-        printf("    0x%x %s: ", 
-                f->function_binary_value,
-                f->name);
-        for (unsigned int j=0; j < f->argc; j++) {
-            argument_def * a = f->arguments[j];
-            printf("<%s:%d %s> ",
-                    type_name(a->type),
-                    a->bitwidth,
-                    a->name);
-        }
-        printf("\n");
-    }
-}
