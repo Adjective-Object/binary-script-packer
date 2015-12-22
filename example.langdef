@@ -3,45 +3,12 @@ meta
     namewidth 6
     nameshift 2
 
-def 
-    0x28 
-    graphic
-    skip6 
-    int4 gfxid
-    skip4
-    int4 zoff
-    int4 yoff
-    int4 xoff
-    int4 zrange
-    int4 yrange
-    int4 xrange
-
-
-def 0x64 graphic
-    skip6
-    int4 gfxid
-    skip4
-    int4 zoff
-    int4 yoff
-    int4 xoff
-    int4 zrange
-    int4 yrange
-    int4 xrange
-
-def 0x100 graphic {
-    skip6 (int4 gfx) skip4
-    (int4 zoff) (int4 yoff) (int4 xoff)
-    (int4 zrange) (int4 yrange) (int4 xrange)
-}
-
-def{ 0xFc graphic
-    skip6 (int4 gfx) skip4
-    (int4 zoff) (int4 yoff) (int4 xoff)
-    (int4 zrange) (int4 yrange) {int4 xrange}
-}
-
-def 0x08 graphic {
+def 0x10 graphic {
     skip6 int4(gfx) skip4
     int4(zoff) int4(yoff) int4(xoff)
     int4(zrange) int4(yrange) int4(xrange)
+}
+
+def 0x08 test {
+    skip2 (int4 intarg) (float4 floatarg)
 }

@@ -5,8 +5,10 @@
 all: clitool
 
 program = scripter
-src = src/scripter.c src/parsescript.c \
-	  src/langdef.c
+src = src/main.c src/parsescript.c \
+	  src/langdef.c src/translator.c \
+	  src/util.c src/bitbuffer.c
+
 obj = $(src:.c=.o)
 CFLAGS = -g -Wall -std=c99 -Isrc
 LDFLAGS = -lsweetexpressions -lm
