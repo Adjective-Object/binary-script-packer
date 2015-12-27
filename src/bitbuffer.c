@@ -12,7 +12,7 @@ bool bitbuffer_next(bitbuffer * b){
         b->buffer++;
         b->remaining_bytes--;
         if (b->remaining_bytes < 0) {
-            printf("error trying to advance through empty buffer");
+            printf("error trying to pop from empty bitbuffer");
             exit(1);
         }
     }
@@ -20,24 +20,53 @@ bool bitbuffer_next(bitbuffer * b){
     return (b->buffer[0] >> (8 - b->head_offset)) & 1;
 }
 
-void bitbuffer_init(bitbuffer * b, size_t bufsize) {
-    b->buffer_origin = (char *) malloc(sizeof(char) * bufsize);
-    b->buffer = b->buffer + bufsize;
+void bitbuffer_advance(bitbuffer * b, size_t bits) {
+    b->head_offset = b->head_offset + (bits % 8);
+    b->buffer += bits / 8;
+    b->remaining_bytes -= bits/8;
+    while (b->head_offset >= 8) {
+        b->head_offset -= 8;
+        b->buffer++;
+        b->remaining_bytes--;
+    }
+
+    if (b->remaining_bytes < 0) {
+        printf("error trying to advance past the end "
+               "of a bitbuffer");
+        exit(1);
+    }
+}
+
+void bitbuffer_init_from_buffer(bitbuffer * b, 
+        char * buffer, size_t bufsize) {
+    b->buffer_origin = buffer;
+    b->buffer = b->buffer_origin;
 
     b->head_offset = 0;
 
     b->buflen_max = bufsize;
-    b->remaining_bytes = 0;
+    b->remaining_bytes = bufsize;
 }
 
-void bitbuffer_pop(char * target, bitbuffer * source, size_t bits) {
-    size_t bytes = bits2bytes(bits/8);
+void bitbuffer_init(bitbuffer * b, size_t bufsize) {
+    bitbuffer_init_from_buffer(
+            b, (char *) malloc(sizeof(char) * bufsize), bufsize);
+}
+
+void bitbuffer_pop(void * t, bitbuffer * source, size_t bits) {
+    char * target = t;
+    size_t bytes = bits2bytes(bits);
     for(size_t i=0; i<bytes; i++) {
-        target[i] = 0;
-        target[i] = target[i] | source->buffer[i] << source->head_offset;
-        target[i] = target[i] | source->buffer[i+1] >> source->head_offset;
+        if (source->head_offset != 0) {
+            target[i] = source->buffer[i] << source->head_offset;
+            target[i] = target[i] | 
+                (source->buffer[i+1] >> (8 - source->head_offset));
+        } else {
+            target[i] = source->buffer[i];
+        }
     }
 
+    bitbuffer_advance(source, bits);
 }
 
 void bitbuffer_print(bitbuffer *b) {

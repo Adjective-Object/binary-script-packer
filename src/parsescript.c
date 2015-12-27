@@ -199,10 +199,6 @@ language_def * parse_language(FILE * f) {
             } else if (strcmp(content, "meta") == 0) {
                 // parse metadata block
                 parse_metadata(language, current);
-                printf("endian=%d, width=%d, bitshift=%d\n",
-                        (int) language->target_endianness,
-                        language->function_name_width,
-                        language->function_name_bitshift);
             } else {
                 printf("unrecognized root level command '%s'\n",
                         content);

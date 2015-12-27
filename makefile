@@ -10,7 +10,7 @@ src = src/main.c src/parsescript.c \
 	  src/util.c src/bitbuffer.c
 
 obj = $(src:.c=.o)
-CFLAGS = -g -Wall -std=c99 -Isrc
+CFLAGS = -g -Wall -std=c99 -Isrc -D_POSIX_SOURCE
 LDFLAGS = -lsweetexpressions -lm
 
 clitool: $(program)

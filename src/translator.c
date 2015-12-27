@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #include "langdef.h"
 #include "translator.h"
@@ -81,6 +82,7 @@ void binscript_peek_head(
             }
             break;
         case FROM_MEMORY:
+            //printf("%p <- %p\n", buffer, consumer->source);
             memcpy(buffer, consumer->source, bytes);
             break;
     }
@@ -101,7 +103,7 @@ void binscript_pop_head(
             break;
         case FROM_MEMORY:
             memcpy(buffer, consumer->source, bytes);
-            consumer->source += bytes;
+            consumer->source = (void*) ((char *)consumer->source + bytes);
             break;
     }
 }
@@ -114,7 +116,7 @@ unsigned int binscript_peek_fn(binscript_consumer * consumer) {
         fname_size_bytes = bits2bytes(fname_size_bits);
 
     // get the head of the buffer 
-    char * fname_buffer = malloc(sizeof(char) * fname_size_bytes);
+    char * fname_buffer = (char *) malloc(sizeof(char) * fname_size_bytes);
     binscript_peek_head(consumer, fname_buffer, fname_size_bytes);
 
     unsigned int fn_name = funcname_from_buffer(consumer->lang, fname_buffer);
@@ -137,10 +139,13 @@ function_call * binscript_next(binscript_consumer *consumer) {
     // The id of the function being called
     unsigned int function_id = binscript_peek_fn(consumer);
 
+    if (function_id == 0) {
+        return NULL;
+    }
+
     // get the body of the function based on the width
     function_def * funcdef = lang_getfn(consumer->lang, function_id);
-    printf("got function: %s\n", funcdef->name);
-    
+
     if (funcdef == NULL) {
         printf("could not look up function with id 0x%x\n", function_id);
         exit(1);
@@ -151,10 +156,72 @@ function_call * binscript_next(binscript_consumer *consumer) {
     char * funcBuffer = (char *) malloc(sizeof(char) * func_width);
     binscript_pop_head(consumer, funcBuffer, func_width);
     
-    printf("function buffer contents: ");
-    print_hex(funcBuffer, func_width);
+    //printf("function buffer contents: ");
+    //print_hex(funcBuffer, func_width);
 
-    function_call * call = lang_callfn(consumer->lang, funcBuffer);
+    function_call * call = translate_function_call(
+            consumer->lang, funcBuffer, func_width);
     free(funcBuffer);
     return call;
 }
+
+function_call * translate_function_call(language_def * l,
+        char * databuffer, size_t databuffer_len) {
+    // get the function name from a buffer
+    unsigned int fn_name = funcname_from_buffer(l, databuffer);
+    function_def * fn = lang_getfn(l, fn_name);
+
+    // make a bitbuffer wrapper for the data buffer
+    bitbuffer callbuffer, argbuffer;
+    bitbuffer_init_from_buffer(&callbuffer, databuffer, databuffer_len);
+    bitbuffer_advance(&callbuffer, l->function_name_width);
+
+    // create the function call object
+    function_call * call = (function_call *) malloc(sizeof(function_call));
+    call->defn = fn;
+    // allocate an array to hold pointers to each argument
+    call->args = (void **) malloc(sizeof(char *) * fn->argc); 
+
+    for (size_t i = 0; i<fn->argc; i++) {
+        // make a bitbuffer for the current argument
+        size_t arg_bits = fn->arguments[i]->bitwidth;
+        bitbuffer_init_from_buffer(&argbuffer, callbuffer.buffer, 
+                bits2bytes(arg_bits + callbuffer.head_offset));
+        bitbuffer_advance(&argbuffer, callbuffer.head_offset);
+
+        // initialie the current argument from that bitbuffer
+        call->args[i] = arg_init(l, fn->arguments[i], &argbuffer);
+
+        // advance the global buffer to the next argument;
+        bitbuffer_advance(&callbuffer, arg_bits); 
+    }
+      
+    return call;
+}
+
+
+unsigned int funcname_from_buffer(language_def * lang, char * fname_buffer) {
+    
+    // function sizes
+    size_t fname_size_bits = lang->function_name_width,
+        fname_size_bytes = bits2bytes(fname_size_bits); 
+
+    // create the number from the buffer
+    unsigned int fn_name = 0;
+    for(unsigned int byte = 0; byte < fname_size_bytes; byte++) {
+        unsigned int remainderbits = fname_size_bits - byte * 8;
+        unsigned int firstbit;
+        if (remainderbits >= 8 || remainderbits == 0) {
+            firstbit = 0;
+        } else {
+            firstbit = 8 - remainderbits;
+        }
+
+        for (unsigned int bitoff = firstbit; bitoff < 8; bitoff++) {
+            fn_name = (fn_name << 1) | ((fname_buffer[byte] >> (7 - bitoff)) & 1);
+        }
+    }
+
+    return fn_name >> lang->function_name_bitshift;
+}
+

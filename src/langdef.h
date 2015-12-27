@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include "bitbuffer.h"
 
 typedef enum arg_type {
     RAW_STRING, // non null-terminated string
@@ -10,10 +11,11 @@ typedef enum arg_type {
     INT, // integer
     UNSIGNED_INT,
     FLOAT, // IEEE float  
-    UNSIGNED_FLOAT,
     SKIP,
     __ARG_TYPE_CT,
 } arg_type;
+
+extern const char * typenames[];
 
 typedef enum endianness {
     BIG_ENDIAN,
@@ -64,9 +66,8 @@ void print_fn(language_def *l, function_def *f);
 void print_fn_call(function_call * call);
 
 function_def * lang_getfn(language_def * l, unsigned int binary_value);
-function_call * lang_callfn(language_def * l, char * databuffer);
 function_call * func_getcall(function_def * d, void * call);
-unsigned int funcname_from_buffer(language_def * def, char * buffer);
+void * arg_init(language_def * l, argument_def * def, bitbuffer * buffer);
 
 size_t func_call_width(language_def * l, function_def * def);
 

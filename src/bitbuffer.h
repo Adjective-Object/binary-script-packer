@@ -12,9 +12,12 @@ typedef struct bitbuffer{
 } bitbuffer;
 
 bool bitbuffer_next(bitbuffer * buffer);
+void bitbuffer_advance(bitbuffer * buffer, size_t bits);
+void bitbuffer_init_from_buffer(bitbuffer * buffer,
+        char * data_buffer, size_t len);
 void bitbuffer_init(bitbuffer * buffer, size_t len);
 
-void bitbuffer_pop(char * target, bitbuffer * source, size_t bits);
+void bitbuffer_pop(void * target, bitbuffer * source, size_t bits);
 void bitbuffer_print(bitbuffer *b);
 
 #endif

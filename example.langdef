@@ -10,5 +10,5 @@ def 0x10 graphic {
 }
 
 def 0x08 test {
-    skip2 (int4 intarg) (float4 floatarg)
+    skip2 (int32 intarg) (float32 floatarg)
 }

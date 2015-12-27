@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <math.h>
 #include <string.h>
+#include <limits.h>
 
 #include "parsescript.h"
 #include "langdef.h"
@@ -15,9 +16,9 @@ const char * typenames[] = {
     "int",
     "uint",
     "float",
-    "ufloat",
     "skip"
 };
+
 
 bool check_size(arg_type type, unsigned int space,
         unsigned int value) {
@@ -50,6 +51,10 @@ char * type_name(arg_type t) {
 }
 
 void print_lang(language_def * l) {
+    printf("endian=%d, width=%d, bitshift=%d\n",
+                        (int) l->target_endianness,
+                        l->function_name_width,
+                        l->function_name_bitshift);
     for (unsigned int i=0; i < l->function_ct; i++) {
         print_fn(l, l->functions[i]);
     }
@@ -98,8 +103,106 @@ void print_fn_call(function_call * call) {
         }
     }
     printf(")\n");
+}
 
+void * arg_init(language_def * l, argument_def * argdef, 
+        bitbuffer * buffer) {
+    size_t buffer_len;
+    int sign = 1;
 
+    float f;
+    double d;
+    long double * ld;
+
+    printf("initting arg type \"%s\" %d\n", 
+            typenames[argdef->type],
+            argdef->bitwidth);
+
+    printf("buffer contents: ");
+    bitbuffer_print(buffer);
+
+    switch(argdef->type) {
+        case RAW_STRING:
+        case STRING:
+            if(argdef->type == RAW_STRING)
+                buffer_len = bits2bytes(argdef->bitwidth) + 1;
+            else 
+                buffer_len = bits2bytes(argdef->bitwidth);
+            
+            char * strbuffer = malloc(buffer_len);
+            bitbuffer_pop(strbuffer, buffer, buffer_len - 1);
+            return strbuffer;
+
+        case INT:
+        case UNSIGNED_INT:
+            buffer_len = argdef->bitwidth;
+
+            // put the data at the front of the int
+            long int * int_internal = 
+                (long int *) malloc(sizeof(long int));
+            bitbuffer_pop(int_internal, buffer, buffer_len);
+            // move to the least significant bits of the long
+            if (IS_BIG_ENDIAN) {
+                *int_internal = *int_internal >> 
+                    (sizeof(long int) * 8 - buffer_len); 
+            }
+
+            //swap the endianness to match host endianness
+            if((IS_BIG_ENDIAN) != (l->target_endianness == BIG_ENDIAN)) {
+                printf("integer switch endianness (%ld)\n", *int_internal);
+                swap_endian_on_field(int_internal, bits2bytes(buffer_len));
+            }
+
+            // apply signdedness
+            if (INT == argdef->type) {
+                sign = *int_internal >> (buffer_len - 1);
+                printf("sign: %d\n", sign);
+                if (sign) {
+                    *int_internal = *int_internal & (~(1 << (buffer_len - 1)));
+                    *int_internal = - *int_internal;
+                }
+            }
+
+            return int_internal;
+
+        case FLOAT:
+            buffer_len = argdef->bitwidth;
+            ld = (long double *) malloc(sizeof(long double));
+            switch(buffer_len) {
+                case sizeof(float) * 8:
+                    printf("f ");
+                    bitbuffer_pop(&f, buffer, buffer_len);
+                    *ld = f;
+                    printf("%f\n", f);
+                    break;
+                case sizeof(double) * 8:
+                    printf("d ");
+                    bitbuffer_pop(&d, buffer, buffer_len);
+                    printf("%f\n", d);
+                    *ld = d;
+                    break;
+                case sizeof(long double) * 8:
+                    printf("ld\n");
+                    bitbuffer_pop(ld, buffer, buffer_len);
+                    break;
+                default:
+                    printf("no known decoding for float of length %d\n",
+                            (int) buffer_len);
+                    exit(1);
+            }
+            // TODO endiannesss for floats?
+            
+            return ld;
+
+        case SKIP:
+            bitbuffer_advance(buffer, argdef->bitwidth);
+            return NULL;
+
+        default:
+            printf("error trying to initialize unknown argtpye"
+                   "%d", argdef->type);
+            exit(1);
+    }
 }
 
 function_def * lang_getfn(language_def * l, unsigned int binary_value) {
@@ -110,108 +213,5 @@ function_def * lang_getfn(language_def * l, unsigned int binary_value) {
         }
     }
     return NULL;
-}
-
-function_call * lang_callfn(language_def * l, char * databuffer) {
-    unsigned int fn_name = funcname_from_buffer(l, databuffer);
-    function_def * fn = lang_getfn(l, fn_name);
-
-    printf("fn_name: %d\n", fn_name);
-
-    // make a bitbuffer wrapper for the data buffer
-    bitbuffer b;
-    b.buffer = databuffer;
-    b.buffer_origin = databuffer;
-    b.buflen_max = bits2bytes(func_call_width(l, fn));
-    b.remaining_bytes = b.buflen_max;
-    b.head_offset = l->function_name_width;
-
-    // create the function call object
-    function_call * call = (function_call *) malloc(sizeof(function_call));
-    call->defn = fn;
-
-    // allocate an array to hold argument contents
-    call->args = (void **) malloc(sizeof(char *) * fn->argc);
-    char * current_arg_buffer = NULL;
-    size_t bit_in_arg = 0;
-    uint8_t buffer_ind = 0;
-
-    // process bit by bit
-    unsigned int current_arg_index = 0;
-    while(current_arg_index < fn->argc) {
-        printf("ARGUMENT (%d/%d)\n", current_arg_index + 1, fn->argc);
-        printf("buffer content: ");
-        bitbuffer_print(&b);
-        size_t current_arg_bytesize = 
-            bits2bytes(fn->arguments[current_arg_index]->bitwidth);
-        
-        // if there is no buffer for the current argument, make one
-        if (current_arg_buffer == NULL) {
-            printf("NEW ARG\n");
-            current_arg_buffer = 
-                (char *) malloc(sizeof(char) * current_arg_bytesize);
-            memset(current_arg_buffer, 0, current_arg_bytesize);
-            bit_in_arg = 0;
-        }
-
-        // get the first bit into the current arg's buffer
-        shiftBuffer(current_arg_buffer, current_arg_bytesize, -1);
-        current_arg_buffer[current_arg_bytesize - 1] = 
-            current_arg_buffer[current_arg_bytesize - 1] | bitbuffer_next(&b);
-        
-        printf("current arg=%d \n", *current_arg_buffer);
-
-        bit_in_arg++;
-        buffer_ind++;
-        if (buffer_ind >= 8) {
-            buffer_ind = buffer_ind - 8;
-            databuffer++;
-        }
-
-        // if we have reached the end of the current argument, then put it in
-        // the function call at the current index & advance
-        if (bit_in_arg >= fn->arguments[current_arg_index]->bitwidth) {
-            call->args[current_arg_index] = current_arg_buffer;
-            current_arg_buffer = NULL;
-            current_arg_index++;
-        }
-        
-    }
-
-    
-    for (unsigned int i=0; i<fn->argc; i++) {
-        size_t argsize = sizeof(char) * bits2bytes(fn->arguments[i]->bitwidth);
-        void * arg_content = malloc(argsize);
-        memcpy(arg_content, databuffer, argsize);
-        call->args[i] = arg_content;
-    }
-    
-    return call;
-}
-
-
-unsigned int funcname_from_buffer(language_def * lang, char * fname_buffer) {
-    
-    // function sizes
-    size_t fname_size_bits = lang->function_name_width,
-        fname_size_bytes = bits2bytes(fname_size_bits); 
-
-    // create the number from the buffer
-    unsigned int fn_name = 0;
-    for(unsigned int byte = 0; byte < fname_size_bytes; byte++) {
-        unsigned int remainderbits = fname_size_bits - byte * 8;
-        unsigned int firstbit;
-        if (remainderbits >= 8 || remainderbits == 0) {
-            firstbit = 0;
-        } else {
-            firstbit = 8 - remainderbits;
-        }
-
-        for (unsigned int bitoff = firstbit; bitoff < 8; bitoff++) {
-            fn_name = (fn_name << 1) | ((fname_buffer[byte] >> (7 - bitoff)) & 1);
-        }
-    }
-
-    return fn_name >> lang->function_name_bitshift;
 }
 
