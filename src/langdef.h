@@ -72,4 +72,10 @@ void * arg_init(language_def * l, argument_def * def, bitbuffer * buffer);
 size_t func_call_width(language_def * l, function_def * def);
 
 
+void free_lang(language_def *l);
+void free_fn(function_def * fn);
+void free_call(function_call * call);
+void free_arg(argument_def * argdef);
+
+
 #endif

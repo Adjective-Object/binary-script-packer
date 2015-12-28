@@ -98,7 +98,8 @@ function_def * parse_fn(language_def * l, swexp_list_node * node) {
     
     // get the name out of the node
     head = head->next;
-    f->name = head->content;
+    f->name = malloc(sizeof(char) * (strlen(head->content) + 1));
+    strcpy(f->name, head->content);
 
     head = head->next;
 
@@ -126,7 +127,9 @@ function_def * parse_fn(language_def * l, swexp_list_node * node) {
 
             swexp_list_node * lnode = list_head(head);
             parse_argtype(argument, lnode);
-            argument->name = lnode->next->content;
+            char * arg_name = lnode->next->content;
+            argument->name = malloc((strlen(arg_name) + 1) * sizeof(char));
+            strcpy(argument->name, arg_name);
         }
     }
 
@@ -210,6 +213,8 @@ language_def * parse_language(FILE * f) {
             exit(1);
         }
     }
+
+    free_list(head);
 
     return language;
 } 

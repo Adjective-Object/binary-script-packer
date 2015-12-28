@@ -46,15 +46,17 @@ void bitbuffer_init_from_buffer(bitbuffer * b,
 
     b->buflen_max = bufsize;
     b->remaining_bytes = bufsize;
+    b->buffer_controlled = false;
 }
 
 void bitbuffer_init(bitbuffer * b, size_t bufsize) {
     bitbuffer_init_from_buffer(
             b, (char *) malloc(sizeof(char) * bufsize), bufsize);
+    b->buffer_controlled = true;
 }
 
 void bitbuffer_pop(void * t, bitbuffer * source, size_t bits) {
-    char * target = t;
+    char * target = (char *) t;
     size_t bytes = bits2bytes(bits);
     for(size_t i=0; i<bytes; i++) {
         if (source->head_offset != 0) {
@@ -82,3 +84,10 @@ void bitbuffer_print(bitbuffer *b) {
     }
     printf("\n");
 }
+
+void bitbuffer_free(bitbuffer * b) {
+    if (b->buffer_controlled)
+        free(b->buffer_origin);
+    free(b);
+}
+

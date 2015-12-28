@@ -2,6 +2,7 @@
 #define BINSCRIPT_BITBUFFER
 
 #include <stddef.h>
+#include <stdbool.h>
 
 typedef struct bitbuffer{
     char * buffer;
@@ -9,6 +10,7 @@ typedef struct bitbuffer{
     size_t remaining_bytes;
     size_t buflen_max;
     int head_offset; 
+    bool buffer_controlled;
 } bitbuffer;
 
 bool bitbuffer_next(bitbuffer * buffer);
@@ -19,6 +21,8 @@ void bitbuffer_init(bitbuffer * buffer, size_t len);
 
 void bitbuffer_pop(void * target, bitbuffer * source, size_t bits);
 void bitbuffer_print(bitbuffer *b);
+
+void bitbuffer_free(bitbuffer * b);
 
 #endif
 

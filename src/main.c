@@ -25,6 +25,8 @@ int main(int argc, char ** argv) {
     printf("Language definition:\n");
     print_lang(l);
 
+    fclose(lang_file);
+
     //////////////////////////////////////////////
     // Test the output from the stream consumer //
     //////////////////////////////////////////////
@@ -44,7 +46,10 @@ int main(int argc, char ** argv) {
     function_call * call;
     while((call = binscript_next(consumer)) != NULL) {
         print_fn_call(call);
+        free_call(call);
     }
+
+    binscript_free(consumer);
 
     //////////////////////////////////////////////
     // Test the output from the buffer consumer //
@@ -75,8 +80,12 @@ int main(int argc, char ** argv) {
     printf("\nHex file contents: \n");
     while((call = binscript_next(mem_consumer)) != NULL) {
         print_fn_call(call);
-        printf("\n");
+        free_call(call);
     }
+
+    fclose(packed_file);
+    binscript_free(mem_consumer);
+    free_lang(l);
 
 }
 

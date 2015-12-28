@@ -88,14 +88,18 @@ void print_fn_call(function_call * call) {
                 printf("%s", (char *) call->args[i]);
                 break;
             case INT:
-                printf("%d", *((int *) call->args[i]));
+            case UNSIGNED_INT:
+                printf("%ld", *((long int *) call->args[i]));
                 break;
             case FLOAT:
-                printf("%f", *((float *) call->args[i]));
+                printf("%Lf", *((long double *) call->args[i]));
                 break;
             case SKIP:
                 break;
             default:
+                printf("unhandled argument type when printing (%s)\n",
+                        typenames[argdefs[i]->type]);
+                exit(1);
                 break;
         }
         if (argdefs[i]->type != SKIP && i + 1 < call->defn->argc) {
@@ -113,13 +117,6 @@ void * arg_init(language_def * l, argument_def * argdef,
     float f;
     double d;
     long double * ld;
-
-    printf("initting arg type \"%s\" %d\n", 
-            typenames[argdef->type],
-            argdef->bitwidth);
-
-    printf("buffer contents: ");
-    bitbuffer_print(buffer);
 
     switch(argdef->type) {
         case RAW_STRING:
@@ -140,6 +137,7 @@ void * arg_init(language_def * l, argument_def * argdef,
             // put the data at the front of the int
             long int * int_internal = 
                 (long int *) malloc(sizeof(long int));
+            memset(int_internal, 0, sizeof(long int));
             bitbuffer_pop(int_internal, buffer, buffer_len);
             // move to the least significant bits of the long
             if (IS_BIG_ENDIAN) {
@@ -149,16 +147,15 @@ void * arg_init(language_def * l, argument_def * argdef,
 
             //swap the endianness to match host endianness
             if((IS_BIG_ENDIAN) != (l->target_endianness == BIG_ENDIAN)) {
-                printf("integer switch endianness (%ld)\n", *int_internal);
                 swap_endian_on_field(int_internal, bits2bytes(buffer_len));
             }
 
             // apply signdedness
             if (INT == argdef->type) {
                 sign = *int_internal >> (buffer_len - 1);
-                printf("sign: %d\n", sign);
                 if (sign) {
-                    *int_internal = *int_internal & (~(1 << (buffer_len - 1)));
+                    *int_internal = 
+                        *int_internal & (~(1 << (buffer_len - 1)));
                     *int_internal = - *int_internal;
                 }
             }
@@ -170,28 +167,31 @@ void * arg_init(language_def * l, argument_def * argdef,
             ld = (long double *) malloc(sizeof(long double));
             switch(buffer_len) {
                 case sizeof(float) * 8:
-                    printf("f ");
                     bitbuffer_pop(&f, buffer, buffer_len);
+                    if((IS_BIG_ENDIAN) != (l->target_endianness == BIG_ENDIAN)) {
+                        swap_endian_on_field(&f, sizeof(float));
+                    }
                     *ld = f;
-                    printf("%f\n", f);
                     break;
                 case sizeof(double) * 8:
-                    printf("d ");
                     bitbuffer_pop(&d, buffer, buffer_len);
-                    printf("%f\n", d);
+                    if((IS_BIG_ENDIAN) != (l->target_endianness == BIG_ENDIAN)) {
+                        swap_endian_on_field(&d, sizeof(double));
+                    }
                     *ld = d;
                     break;
                 case sizeof(long double) * 8:
-                    printf("ld\n");
                     bitbuffer_pop(ld, buffer, buffer_len);
+                    if((IS_BIG_ENDIAN) != (l->target_endianness == BIG_ENDIAN)) {
+                        swap_endian_on_field(ld, sizeof(long double));
+                    }
                     break;
                 default:
                     printf("no known decoding for float of length %d\n",
                             (int) buffer_len);
                     exit(1);
             }
-            // TODO endiannesss for floats?
-            
+
             return ld;
 
         case SKIP:
@@ -213,5 +213,35 @@ function_def * lang_getfn(language_def * l, unsigned int binary_value) {
         }
     }
     return NULL;
+}
+
+void free_lang(language_def * l) {
+    for (size_t i=0; i<l->function_ct; i++) {
+        free_fn(l->functions[i]);
+    }
+    free(l->functions);
+    free(l);
+}
+
+void free_call(function_call * call) { 
+    for (size_t i=0; i<call->defn->argc; i++) {
+        free(call->args[i]);
+    }
+    free(call->args);
+    free(call);
+}
+
+void free_fn(function_def * fn) {
+    for (size_t i=0; i<fn->argc; i++) {
+        free_arg(fn->arguments[i]);
+    }
+    free(fn->name);
+    free(fn->arguments);
+    free(fn);
+}
+
+void free_arg(argument_def * argdef) {
+    free(argdef->name);
+    free(argdef);
 }
 

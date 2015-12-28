@@ -60,4 +60,6 @@ function_call * translate_function_call(
         language_def * l, char * databuffer, size_t databuffer_len);
 unsigned int funcname_from_buffer(language_def * def, char * buffer);
 
+void binscript_free(binscript_consumer * c);
+
 #endif

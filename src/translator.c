@@ -26,20 +26,20 @@ static binscript_consumer * binscript_undef_consumer(
 }
 
 /**
-* Creates a consumer in a given direction
+ * Creates a consumer in a given direction
  * with null terminated ending condition
  **/
 binscript_consumer * binscript_file_consumer(
         language_def * lang,
         FILE * f,
         binscript_parser_direction direction){
- 
+
     binscript_consumer * c = binscript_undef_consumer(lang, direction);
 
     c->parser_source = FROM_FILE;
     c->source = (void *) f;
 
-    return c;
+        return c;
 }
 
 binscript_consumer * binscript_mem_consumer(
@@ -59,8 +59,8 @@ void consumer_set_size(
         binscript_consumer* c,
         binscript_endmode endmode,
         unsigned int remaining) {
-   c->endmode = endmode;
-   c->remaining_size = remaining;
+    c->endmode = endmode;
+    c->remaining_size = remaining;
 }
 
 // put the first <bytes> available bytes in <consumer> into <buffer>,
@@ -113,7 +113,7 @@ unsigned int binscript_peek_fn(binscript_consumer * consumer) {
 
     // get the width of the function name in bytes
     size_t fname_size_bits = consumer->lang->function_name_width,
-        fname_size_bytes = bits2bytes(fname_size_bits);
+    fname_size_bytes = bits2bytes(fname_size_bits);
 
     // get the head of the buffer 
     char * fname_buffer = (char *) malloc(sizeof(char) * fname_size_bytes);
@@ -129,12 +129,12 @@ unsigned int binscript_peek_fn(binscript_consumer * consumer) {
 #define MAX_FN_BUFFER_SIZE 255
 function_call * binscript_next(binscript_consumer *consumer) {
     /* 
-    while(true) {
-        char c = 0;
-        binscript_pop_head(consumer, c, 1);
-        printf("%d\n", (unsigned char) c);
-    }
-    */
+       while(true) {
+       char c = 0;
+       binscript_pop_head(consumer, c, 1);
+       printf("%d\n", (unsigned char) c);
+       }
+       */
 
     // The id of the function being called
     unsigned int function_id = binscript_peek_fn(consumer);
@@ -155,7 +155,7 @@ function_call * binscript_next(binscript_consumer *consumer) {
             func_call_width(consumer->lang, funcdef));
     char * funcBuffer = (char *) malloc(sizeof(char) * func_width);
     binscript_pop_head(consumer, funcBuffer, func_width);
-    
+
     //printf("function buffer contents: ");
     //print_hex(funcBuffer, func_width);
 
@@ -195,16 +195,16 @@ function_call * translate_function_call(language_def * l,
         // advance the global buffer to the next argument;
         bitbuffer_advance(&callbuffer, arg_bits); 
     }
-      
+
     return call;
 }
 
 
 unsigned int funcname_from_buffer(language_def * lang, char * fname_buffer) {
-    
+
     // function sizes
     size_t fname_size_bits = lang->function_name_width,
-        fname_size_bytes = bits2bytes(fname_size_bits); 
+           fname_size_bytes = bits2bytes(fname_size_bits); 
 
     // create the number from the buffer
     unsigned int fn_name = 0;
@@ -223,5 +223,12 @@ unsigned int funcname_from_buffer(language_def * lang, char * fname_buffer) {
     }
 
     return fn_name >> lang->function_name_bitshift;
+}
+
+void binscript_free(binscript_consumer * c) {
+    // don't invoke the free helper since the bitbuffer is
+    // a field of the consumer
+    free(c->internal_buf.buffer_origin);
+    free(c);
 }
 
