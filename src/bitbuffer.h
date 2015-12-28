@@ -22,6 +22,10 @@ void bitbuffer_init(bitbuffer * buffer, size_t len);
 void bitbuffer_pop(void * target, bitbuffer * source, size_t bits);
 void bitbuffer_print(bitbuffer *b);
 
+
+void bitbuffer_writebit(bitbuffer * buffer, bool bit);
+void bitbuffer_writeblock(bitbuffer * buffer, void * block, size_t bits);
+
 void bitbuffer_free(bitbuffer * b);
 
 #endif

@@ -199,8 +199,63 @@ void * arg_init(language_def * l, argument_def * argdef,
             return NULL;
 
         default:
-            printf("error trying to initialize unknown argtpye"
+            printf("error trying to initialize unknown argtpye "
                    "%d", argdef->type);
+            exit(1);
+    }
+}
+
+void arg_write(bitbuffer * out_buffer,
+        language_def * l, argument_def * argdef,
+        void * argval) {
+    float f;
+    double d;
+    long int * argval_longint = (long int *) argval;
+    long double * argval_longdouble = (long double *) argval;
+    switch(argdef->type) {
+        case INT:
+            bitbuffer_writebit(out_buffer, *argval_longint < 0);
+            for (size_t i = argdef->bitwidth - 2; i>=0; i++){
+                bitbuffer_writebit(
+                        out_buffer,
+                        (*argval_longint >> i) & 1);
+            }
+            return;
+        case UNSIGNED_INT:
+            for (size_t i = argdef->bitwidth; i>=0; i++){
+                bitbuffer_writebit(
+                        out_buffer,
+                        (*argval_longint >> i) & 1);
+            }
+            return;
+        case FLOAT:
+            switch(argdef->bitwidth) {
+                case sizeof(long double) * 8:
+                    bitbuffer_writeblock(out_buffer, argval, sizeof(long double));
+                    return;
+                case sizeof(double) * 8:
+                    d = *argval_longdouble;
+                    bitbuffer_writeblock(out_buffer, &d, sizeof(double));
+                    return;
+                case sizeof(float) * 8:
+                    f = *argval_longdouble;
+                    bitbuffer_writeblock(out_buffer, &f, sizeof(float));
+                    return;
+                default:
+                    printf("tried to switch on unhandled float bitwidth %d",
+                            argdef->bitwidth);
+                    exit(1);
+            }
+            return;
+        case SKIP:
+            for (size_t i = 0; i< argdef->bitwidth; i++){
+                bitbuffer_writebit(out_buffer, 0);
+            }
+            return;
+        default:
+            printf("error trying to write unknown argtype "
+                    "%s", typenames[argdef->type]);
+                    
             exit(1);
     }
 }

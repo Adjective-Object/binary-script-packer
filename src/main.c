@@ -87,5 +87,9 @@ int main(int argc, char ** argv) {
     binscript_free(mem_consumer);
     free_lang(l);
 
+    //////////////////////////////
+    // Test encoding a language //
+    //////////////////////////////
+
 }
 

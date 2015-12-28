@@ -17,7 +17,7 @@ bool bitbuffer_next(bitbuffer * b){
         }
     }
 
-    return (b->buffer[0] >> (8 - b->head_offset)) & 1;
+    return (b->buffer[0] >> (7 - b->head_offset)) & 1;
 }
 
 void bitbuffer_advance(bitbuffer * b, size_t bits) {
@@ -62,7 +62,7 @@ void bitbuffer_pop(void * t, bitbuffer * source, size_t bits) {
         if (source->head_offset != 0) {
             target[i] = source->buffer[i] << source->head_offset;
             target[i] = target[i] | 
-                (source->buffer[i+1] >> (8 - source->head_offset));
+                (source->buffer[i+1] >> (7 - source->head_offset));
         } else {
             target[i] = source->buffer[i];
         }
@@ -89,5 +89,30 @@ void bitbuffer_free(bitbuffer * b) {
     if (b->buffer_controlled)
         free(b->buffer_origin);
     free(b);
+}
+
+
+void bitbuffer_writebit(bitbuffer * b, bool bit){
+    // zero the referenced bit in the buffer
+    *(b->buffer) = *(b->buffer) & (~(*b->buffer << (7 - b->head_offset)));
+    // the set it to bool
+    *(b->buffer) = *(b->buffer) | (bit << (7 - b->head_offset));
+
+    // advance the buffer
+    bitbuffer_advance(b, 1);
+}
+
+void bitbuffer_writeblock(bitbuffer * b, void * block, size_t bits) {
+    // TODO set in char blocks to be fast 'n junk
+    char * head = block;
+    size_t offset = 0;
+    for(size_t i=0; i<bits; i++) {
+        bitbuffer_writebit(b, (*head >> (7 - offset)) & 1);
+
+        if (++offset >= 8) {
+            offset--;
+            head++;
+        }
+    }
 }
 

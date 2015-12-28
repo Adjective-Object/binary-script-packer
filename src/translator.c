@@ -159,13 +159,13 @@ function_call * binscript_next(binscript_consumer *consumer) {
     //printf("function buffer contents: ");
     //print_hex(funcBuffer, func_width);
 
-    function_call * call = translate_function_call(
+    function_call * call = decode_function_call(
             consumer->lang, funcBuffer, func_width);
     free(funcBuffer);
     return call;
 }
 
-function_call * translate_function_call(language_def * l,
+function_call * decode_function_call(language_def * l,
         char * databuffer, size_t databuffer_len) {
     // get the function name from a buffer
     unsigned int fn_name = funcname_from_buffer(l, databuffer);
@@ -197,6 +197,22 @@ function_call * translate_function_call(language_def * l,
     }
 
     return call;
+}
+
+void encode_function_call(bitbuffer * out_buffer,
+        language_def * l, function_call * call) {
+    // write the name of the function to the buffer
+    unsigned int name = call->defn->function_binary_value;
+    for (int i=0; i<l->function_name_width; i++) {
+        bitbuffer_writebit(out_buffer, (name >> i) & 1);
+    }
+
+    // write each of the arguments
+    for(size_t i=0 ;i<call->defn->argc; i++) {
+        arg_write(out_buffer, 
+                l, call->defn->arguments[i],
+                call->args[i]);
+    }
 }
 
 
