@@ -15,8 +15,6 @@
 #include <stdio.h>
 
 void mu_test_sample() {
-    printf("runnning sample test!!!");
 	mu_check(1 == 1);
-	mu_check(1 == 0);
 }
 

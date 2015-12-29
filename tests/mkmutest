@@ -34,7 +34,7 @@ for file in "$@"
 do
 	pr_file=`echo "$file" | sed 's/\"/\\\\\"/g'`
 	suite=`basename "$file" .o | sed 's/\"/\\\\\"/g'`
-	symbols=`nm "$file" | egrep '^[[:xdigit:]]{16} T mu_\w+$' | cut -c20-`
+	symbols=`nm "$file" | egrep '^[[:xdigit:]]+ T mu_\w+$' | cut -f 3 -d ' ' -`
 	tests=`echo "$symbols" | egrep '^mu_test'`
 	inits=`echo "$symbols" | egrep '^mu_init'`
 	terms=`echo "$symbols" | egrep '^mu_term'`
