@@ -9,4 +9,6 @@
 
 language_def * parse_language(FILE * f);
 
+function_call * parse_fn_call(swexp_list_node * call, language_def * l);
+
 #endif
