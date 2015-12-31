@@ -10,7 +10,8 @@ lib_src = src/parsescript.c \
 	  src/util.c src/bitbuffer.c
 program_src = src/main.c
 mutest_src = tests/mutest.c
-test_src = tests/suites/sample_test.c
+test_src = tests/suites/bitbuffer_test.c \
+		   tests/suites/util_test.c
 
 lib_obj = $(lib_src:.c=.o)
 program_obj = $(program_src:.c=.o)
@@ -36,7 +37,8 @@ $(test): $(mutest_obj) $(test_obj) $(lib_obj) tests/suite_runner.o
 	gcc $(LDFLAGS) $^ -o $@
 
 test: $(test)
-	./$(test) -vv
+	valgrind --quiet --leak-check=full --trace-children=yes \
+		./$(test) -vv
 
 tests/suite_runner.c: $(test_obj)
 	tests/mkmutest mutest.h $(test_obj) > $@

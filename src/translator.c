@@ -244,7 +244,7 @@ unsigned int funcname_from_buffer(language_def * lang, char * fname_buffer) {
 void binscript_free(binscript_consumer * c) {
     // don't invoke the free helper since the bitbuffer is
     // a field of the consumer
-    free(c->internal_buf.buffer_origin);
+    bitbuffer_free(&(c->internal_buf));
     free(c);
 }
 
