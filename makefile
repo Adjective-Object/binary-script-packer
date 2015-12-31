@@ -11,7 +11,8 @@ lib_src = src/parsescript.c \
 program_src = src/main.c
 mutest_src = tests/mutest.c
 test_src = tests/suites/bitbuffer_test.c \
-		   tests/suites/util_test.c
+		   tests/suites/util_test.c \
+		   tests/suites/parsescript_test.c
 
 lib_obj = $(lib_src:.c=.o)
 program_obj = $(program_src:.c=.o)
