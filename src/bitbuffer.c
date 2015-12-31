@@ -102,7 +102,7 @@ void bitbuffer_writeblock(bitbuffer * b, void * block, size_t bits) {
         bitbuffer_writebit(b, (*head >> (7 - offset)) & 1);
 
         if (++offset >= 8) {
-            offset--;
+            offset-=8;
             head++;
         }
     }

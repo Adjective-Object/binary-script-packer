@@ -10,6 +10,7 @@ void mu_run_suites() {
 		mu_run_case(mu_test_bitbuffer_next);
 		mu_run_case(mu_test_bitbuffer_pop);
 		mu_run_case(mu_test_bitbuffer_writebit);
+		mu_run_case(mu_test_bitbuffer_writeblock);
 		if (mutest_suite_failed) ++mutest_failed_suites;
 		else                     ++mutest_passed_suites;
 		mutest_suite_failed = 0;

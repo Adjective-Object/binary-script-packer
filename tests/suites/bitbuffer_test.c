@@ -151,3 +151,23 @@ void mu_test_bitbuffer_writebit() {
     bitbuffer_free(&b);
 }
 
+void mu_test_bitbuffer_writeblock() {
+    bitbuffer b;
+
+    #define WRITEBLOCK_BUFLEN_BYTES 21
+    char buff[WRITEBLOCK_BUFLEN_BYTES] = "this is a test array";
+
+    for(size_t i = 1; i<=WRITEBLOCK_BUFLEN_BYTES * 8; i++) {
+        bitbuffer_init(&b, WRITEBLOCK_BUFLEN_BYTES);
+
+        memset(b.buffer_origin, 1, WRITEBIT_BUFLEN_BYTES);
+        bitbuffer_writeblock(&b, buff, i);
+
+        mu_check(0 == memcmp_bits(buff, b.buffer_origin, i));
+        bitbuffer_free(&b);
+
+        check_bitbuffer_location(b, i);
+        check_bitbuffer_invariants(b);
+    }
+}
+
