@@ -50,8 +50,8 @@ tests/suite_runner.c: $(test_obj)
 
 # clean up the example and lib thigs
 clean:
-	rm -f $(lib_objs) $(program_obj) $(test_obj) $(obj) $(program) \
-		$(test) tests/suite_runner.c
+	rm -f $(lib_objs) $(program_obj) $(test_obj) $(mutest_obj) \
+		$(obj) $(program) $(test) tests/suite_runner.c
 
 # debug helper to print makefile variables
 print-%:

@@ -20,7 +20,8 @@ int main(int argc, char ** argv) {
         exit(1);
     }
 
-    language_def * l = parse_language(lang_file);
+    language_def * l = malloc(sizeof(language_def));
+    parse_language(l, lang_file);
 
     printf("Language definition:\n");
     print_lang(l);
@@ -86,6 +87,7 @@ int main(int argc, char ** argv) {
     fclose(packed_file);
     binscript_free(mem_consumer);
     free_lang(l);
+    free(l);
 
     //////////////////////////////
     // Test encoding a language //

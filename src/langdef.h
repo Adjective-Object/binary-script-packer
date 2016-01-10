@@ -56,6 +56,7 @@ typedef struct language_def {
 } language_def;
 
 
+bool validate_size(arg_type type, size_t bits);
 bool check_size(arg_type type, unsigned int space,
         unsigned int requested_size);
 

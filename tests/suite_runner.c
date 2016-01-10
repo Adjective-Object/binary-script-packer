@@ -27,4 +27,15 @@ void mu_run_suites() {
 		mutest_suite_failed = 0;
 	} while (0);
 
+	do {
+		mutest_suite_name = "parsescript_test";
+		mu_print(MU_SUITE, "\nRunning suite 'parsescript_test'\n");
+		mu_run_case(mu_test_parse_argtype);
+		mu_run_case(mu_test_parse_function);
+		mu_run_case(mu_test_parse_int);
+		if (mutest_suite_failed) ++mutest_failed_suites;
+		else                     ++mutest_passed_suites;
+		mutest_suite_failed = 0;
+	} while (0);
+
 }

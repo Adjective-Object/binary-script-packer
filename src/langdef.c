@@ -11,17 +11,19 @@
 #include "bitbuffer.h"
 
 const char * typenames[] = {
-    "raw_str",
-    "str",
-    "int",
-    "uint",
-    "float",
-    "skip"
+    [RAW_STRING] = "raw_str",
+    [STRING] = "str",
+    [INT] = "int",
+    [UNSIGNED_INT] = "uint",
+    [FLOAT] = "float",
+    [SKIP] = "skip"
 };
 
 
 bool check_size(arg_type type, unsigned int space,
         unsigned int value) {
+    // check that the value provided can fit into the 
+    // space of the argument type defined
     switch(type) {
         case UNSIGNED_INT:
             return log2((double) value) <= space;
@@ -29,6 +31,34 @@ bool check_size(arg_type type, unsigned int space,
             printf("check_size called on unhandled type %d", (int) type);
             exit(1);
     }
+}
+
+bool validate_size(arg_type type, size_t bits) {
+    // check that the size provided can be 
+    // used for the type of the argument
+    switch(type) {
+        // strings must be represented as multiples of char
+        case RAW_STRING:
+        case STRING:
+            return bits % 8 == 0;
+
+        // floats must be represented as IEE754 floats
+        // either long double, double, or float
+        case FLOAT:
+            return (bits == 16
+                    || bits == 32
+                    || bits == 64);
+
+        // ints and skips can be any width
+        case INT:
+        case SKIP:
+        case UNSIGNED_INT:
+            return 1;
+
+        default:
+            return false;
+    }
+    
 }
 
 size_t func_call_width(language_def * l, function_def * def) {
@@ -275,7 +305,6 @@ void free_lang(language_def * l) {
         free_fn(l->functions[i]);
     }
     free(l->functions);
-    free(l);
 }
 
 void free_call(function_call * call) { 
