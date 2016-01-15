@@ -21,6 +21,11 @@ typedef enum PARSE_ERROR {
     DISALLOWED_SIZE,
     UNSPECIFIED_SIZE,
 
+    MISSING_DEF,
+    FUNCTION_BINNAME_PRECISION,
+    FUNCTION_BINNAME_SIZE,
+    MALFORMED_ARGUMENT_DECLARATION,
+
 } PARSE_ERROR;
 
 /**
@@ -60,7 +65,7 @@ PARSE_ERROR parse_argtype(argument_def * argument, char * name);
  *      evaluate the thing
  * description: The definition of the function as a swexp list node
  **/
-void parse_fn(function_def * function, language_def * language,
+PARSE_ERROR parse_fn(function_def * function, language_def * language,
         swexp_list_node * description);
 
 /** Adds a function to a language

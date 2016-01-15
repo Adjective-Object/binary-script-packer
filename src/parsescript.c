@@ -56,23 +56,25 @@ int uparse_int(char * str) {
     int out;
     PARSE_ERROR err = parse_int(&out, str);
     switch(err) {
+        case NO_ERROR:
+            return out;
         case UNKNOWN_INT_FORMAT:
-            perror("unknown int format in parsing int\n");
+            printf("unknown int format in parsing int\n");
             exit(1);
         case BAD_DECIMAL_FORMAT:
-            perror("bad decimal format when parsing int\n");
+            printf("bad decimal format when parsing int\n");
             exit(1);
         case BAD_HEX_FORMAT:
-            perror("bad hex format when parsing int\n");
+            printf("bad hex format when parsing int\n");
             exit(1);
         case BAD_BINARY_FORMAT:
-            perror("bad binary format when parsing int\n");
+            printf("bad binary format when parsing int\n");
             exit(1);
         default:
-            perror("unknown error in parsing int\n");
+            printf("unknown error in parsing int (errcode = %d)\n",
+                    err);
             exit(1);
     }
-    return out;
 }
 
 PARSE_ERROR parse_argtype(argument_def * argument, char * name) {
@@ -139,32 +141,39 @@ void add_fn_to_lang(language_def *l, function_def * def) {
    
 // parses a function of the form
 // (def <bytesymbol> <function name> ...args...)
-void parse_fn(function_def * f, language_def * l, swexp_list_node * node) {
+PARSE_ERROR parse_fn(
+        function_def * f, language_def * l, swexp_list_node * node) {
     swexp_list_node * head = list_head(node);
 
     // check the first element is 'def'
     if (strcmp(head->content, "def") != 0) {
-        printf("parse_fn called on non-functoin object\n");
+        printf("parse_fn called on non-function object\n");
+        print_list(head);
         exit(1);
     }
 
-    // bytecode value
+    // step over 'def' token onto bytecode value
     head = head->next;
     if (head->type != ATOM) {
-        printf("first argument to function def is not an atom\n");
+        printf("first argument to def is not an atom\n");
         exit(1);
     }
 
+    // parse the function binary value
     int cont = uparse_int(head->content), 
         parsed_cont = (cont >> l->function_name_bitshift) 
             << l->function_name_bitshift;
     f->function_binary_value = cont >> l->function_name_bitshift;
+
+    // check that the function binary value is representable
+    // with the bitshift
     if (parsed_cont != cont) {
         printf("precision in symbol '%s' lost in bitshift (0x%x ->0x%x)\n",
                (char*) head->content, cont, parsed_cont);
         exit(1);
     }
     
+    // check that the function binary value falls into the name width
     if (!check_size(UNSIGNED_INT, l->function_name_width, 
                 f->function_binary_value)) {
         printf("function identifier '%s' does not fit in ", 
@@ -172,17 +181,18 @@ void parse_fn(function_def * f, language_def * l, swexp_list_node * node) {
         printf("name width %d\n", l->function_name_width);
         exit(1);
     }
-
-    
-    // get the name out of the node
+  
+    // step to the next atom and get the function name
     head = head->next;
     f->name = malloc(sizeof(char) * (strlen(head->content) + 1));
     strcpy(f->name, head->content);
 
+    // step to the first argument
     head = head->next;
 
-    f->argc = 0;
+    // allocate a pointer to an argument_def on the heap
     f->arguments = malloc(sizeof(argument_def *));
+    f->argc = 0;
 
     for (; head != NULL; head = head->next) {
         f->arguments = realloc(f->arguments,
@@ -210,6 +220,8 @@ void parse_fn(function_def * f, language_def * l, swexp_list_node * node) {
             strcpy(argument->name, arg_name);
         }
     }
+
+    return NO_ERROR;
 }
 
 void parse_metadata_attr(language_def * l, swexp_list_node * node) {

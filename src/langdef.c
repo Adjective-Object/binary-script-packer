@@ -303,6 +303,7 @@ function_def * lang_getfn(language_def * l, unsigned int binary_value) {
 void free_lang(language_def * l) {
     for (size_t i=0; i<l->function_ct; i++) {
         free_fn(l->functions[i]);
+        free(l->functions[i]);
     }
     free(l->functions);
 }
@@ -321,7 +322,6 @@ void free_fn(function_def * fn) {
     }
     free(fn->name);
     free(fn->arguments);
-    free(fn);
 }
 
 void free_arg(argument_def * argdef) {

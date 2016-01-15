@@ -111,12 +111,79 @@ void mu_test_parse_argtype() {
     mu_check_unchanged();
 }
 
-void mu_test_parse_function() {
-    // TODO compare interpreted functions to their expected outputs
-    swexp_list_node * demofn_test = parse_string_to_atoms(
-        "(def 0x10 demofn skip6 (int4 gfx))", 255);
-    free_list(demofn_test);
+bool compare_function_defs(function_def * a, function_def * b) {
+    // check the root level props of either function
+    if (a->argc != b->argc ||
+        0 != strcmp(a->name, b->name) ||
+        a->function_binary_value != b->function_binary_value) {
+        return false;
+    }
+
+    // check that each of the arguments are the same
+    for (size_t i=0; i<a->argc; i++) {
+        argument_def 
+            *arga = a->arguments[i],
+            *argb = b->arguments[i];
+
+        if (((arga->name == NULL) != (argb->name == NULL)) ||
+                (arga->name != NULL && argb->name != NULL &&
+                 0 != strcmp(arga->name, argb->name)) ||
+                arga->type != argb->type ||
+                arga->bitwidth != argb->bitwidth)
+            return false;
+    }
+    return true;
 }
 
+bool test_fndef(function_def * expected, const char * str) {
+    // create a reference language for parsing against
+    language_def language;
+    language.function_name_width = 8;
+    language.function_name_bitshift = 0;
+    language.function_ct = 0;
+    language.function_capacity = 0;
+    language.functions = NULL;
 
+    // parse the sweet expression string to a function def
+    swexp_list_node * swexp_list = parse_string_to_atoms(str, 255);
+
+    function_def output;
+    PARSE_ERROR p = parse_fn(
+            &output, &language, 
+            (swexp_list_node *) swexp_list->content);
+    
+    // check if there was an error
+    mu_check(p == NO_ERROR);
+    
+    // compare the function defs
+    bool toret = compare_function_defs(expected, &output);
+
+    // free the swexp list and the functoin def
+    free_list(swexp_list);
+    free_fn(&output); 
+
+    return toret;
+}
+
+void mu_test_parse_function() {
+    ///////////////////////////
+    // simple function check //
+    ///////////////////////////
+    argument_def
+        a_1 = {SKIP, 6, NULL},
+        a_2 = {INT, 4, "gfx"};
+    argument_def * argz[] = {&a_1, &a_2};
+    struct function_def f = {
+        .function_binary_value = 0x10,
+        .name = "demofn",
+        .argc = 2,
+        .arguments = argz,
+    };
+
+    mu_check(test_fndef(&f, "def 0x10 demofn skip6 int4(gfx)"));
+
+    /////////////////////////////////
+    // check malformed definitions //
+    /////////////////////////////////
+}
 
