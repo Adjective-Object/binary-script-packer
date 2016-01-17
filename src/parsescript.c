@@ -3,6 +3,7 @@
 
 #include "parsescript.h"
 #include "langdef.h"
+#include "util.h"
 
 int scan_binary(int * out, char * str) {
     int val = 0;
@@ -144,46 +145,56 @@ void add_fn_to_lang(language_def *l, function_def * def) {
 PARSE_ERROR parse_fn(
         function_def * f, language_def * l, swexp_list_node * node) {
     swexp_list_node * head = list_head(node);
+    PARSE_ERROR err;
+    // TODO checks on advancing head
 
     // check the first element is 'def'
     if (strcmp(head->content, "def") != 0) {
         printf("parse_fn called on non-function object\n");
-        print_list(head);
-        exit(1);
+        // print_list(head);
+        return MISSING_DEF;
     }
 
     // step over 'def' token onto bytecode value
     head = head->next;
     if (head->type != ATOM) {
         printf("first argument to def is not an atom\n");
-        exit(1);
+        return MISSING_BINNAME;
     }
 
     // parse the function binary value
-    int cont = uparse_int(head->content), 
-        parsed_cont = (cont >> l->function_name_bitshift) 
+    int cont, parsed_cont;
+    if ((err = parse_int(&cont, head->content))) {
+        printf("malformed binname\n");
+        return MALFORMED_BINNAME;
+    }
+    parsed_cont = (cont >> l->function_name_bitshift) 
             << l->function_name_bitshift;
     f->function_binary_value = cont >> l->function_name_bitshift;
 
     // check that the function binary value is representable
     // with the bitshift
     if (parsed_cont != cont) {
-        printf("precision in symbol '%s' lost in bitshift (0x%x ->0x%x)\n",
-               (char*) head->content, cont, parsed_cont);
-        exit(1);
+        // printf("precision in symbol '%s' lost in bitshift (0x%x ->0x%x)\n",
+        //        (char*) head->content, cont, parsed_cont);
+        return FUNCTION_BINNAME_PRECISION;
     }
     
     // check that the function binary value falls into the name width
     if (!check_size(UNSIGNED_INT, l->function_name_width, 
                 f->function_binary_value)) {
-        printf("function identifier '%s' does not fit in ", 
-                (char *) head->content);
-        printf("name width %d\n", l->function_name_width);
-        exit(1);
+        // printf("function identifier '%s' does not fit in ", 
+        //         (char *) head->content);
+        // printf("name width %d\n", l->function_name_width);
+        return FUNCTION_BINNAME_SIZE;
     }
   
     // step to the next atom and get the function name
     head = head->next;
+    if (head->type != ATOM) {
+        return MISSING_NAME;
+    }
+
     f->name = malloc(sizeof(char) * (strlen(head->content) + 1));
     strcpy(f->name, head->content);
 
@@ -205,16 +216,26 @@ PARSE_ERROR parse_fn(
         
         if (head->type == ATOM) {
             // handle the case of a type without a name
-            parse_argtype(argument, (char *) head->content);
+            if ((err = parse_argtype(argument, (char *) head->content))) {
+                free_sequence(f->arguments, f->argc-1);
+                free(f->arguments);
+                return err;
+            }
         } else if (head->type == LIST) {
             // handle the case of a type/name pair
             if(list_len(head) != 2) {
                 printf("tried to parse an argdef w/ !=2 elems\n");
-                exit(1);
+                free_sequence(f->arguments, f->argc - 1);
+                free(f->arguments);
+                return MALFORMED_ARGUMENT_DECLARATION;
             }
 
             swexp_list_node * lnode = list_head(head);
-            parse_argtype(argument, (char *) lnode->content);
+            if ((err = parse_argtype(argument, (char *) lnode->content))) {
+                free_sequence(f->arguments, f->argc - 1);
+                free(f->arguments);
+                return err;
+            }
             char * arg_name = (char *) lnode->next->content;
             argument->name = malloc((strlen(arg_name) + 1) * sizeof(char));
             strcpy(argument->name, arg_name);

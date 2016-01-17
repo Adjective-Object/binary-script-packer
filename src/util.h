@@ -70,4 +70,11 @@ void print_hex(void *bin, size_t size);
  **/
 void print_binary(void *bin, size_t bits);
 
+/**
+ * Frees a sequence of pointers
+ * where head is the first of a list of pointers of length
+ * count
+ **/
+void free_sequence(void * head, size_t count);
+
 #endif

@@ -165,6 +165,29 @@ bool test_fndef(function_def * expected, const char * str) {
     return toret;
 }
 
+PARSE_ERROR test_parse(
+        function_def *out,
+        const char * str) {
+    // create a reference language
+    language_def lang;
+    lang.function_name_width = 8;
+    lang.function_name_bitshift = 0;
+    lang.function_ct = 0;
+    lang.function_capacity = 0;
+    lang.functions = NULL;
+
+    // parse the sweet expression string to a function def
+    swexp_list_node * swexp_list = parse_string_to_atoms(str, 255);
+    PARSE_ERROR e = parse_fn(out, &lang, swexp_list);
+    free_list(swexp_list);
+
+    return e;
+}
+
+#define fn_err(err, str) \
+    mu_check(err == test_parse(&o, str)); \
+    mu_check(0 == memcmp(&o, &ref_arr, sizeof(function_def)))
+
 void mu_test_parse_function() {
     ///////////////////////////
     // simple function check //
@@ -173,7 +196,7 @@ void mu_test_parse_function() {
         a_1 = {SKIP, 6, NULL},
         a_2 = {INT, 4, "gfx"};
     argument_def * argz[] = {&a_1, &a_2};
-    struct function_def f = {
+    function_def f = {
         .function_binary_value = 0x10,
         .name = "demofn",
         .argc = 2,
@@ -185,5 +208,16 @@ void mu_test_parse_function() {
     /////////////////////////////////
     // check malformed definitions //
     /////////////////////////////////
+    
+    function_def o;
+    char ref_arr[sizeof(function_def)];
+    memset(&ref_arr, 0, sizeof(function_def));
+    memset (&o, 0, sizeof(function_def));
+
+    fn_err(MISSING_DEF, "sef 0x10 demofn skip6 int4(gfx)");
+    fn_err(MISSING_DEF, "0x10 demofn skip6 int4(gfx)");
+    fn_err(MISSING_BINNAME, "def int4(gfx)");
+    fn_err(MALFORMED_BINNAME, "def aa demofn int4(demofn)");
+
 }
 

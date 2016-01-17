@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
@@ -80,5 +81,13 @@ int memcmp_bits(void * a, void * b, size_t len) {
     }
 
     return mcp;
+}
+
+void free_sequence(void * head, size_t count){
+    // workaround to avoid complaints from type checker
+    void ** realhead = (void **) head;
+    for (size_t i = 0; i < count ; i++) {
+        free(realhead[i]);
+    }
 }
 
