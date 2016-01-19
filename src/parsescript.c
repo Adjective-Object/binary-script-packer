@@ -150,7 +150,7 @@ PARSE_ERROR parse_fn(
 
     // check the first element is 'def'
     if (strcmp(head->content, "def") != 0) {
-        printf("parse_fn called on non-function object\n");
+        // printf("parse_fn called on non-function object\n");
         // print_list(head);
         return MISSING_DEF;
     }
@@ -158,7 +158,7 @@ PARSE_ERROR parse_fn(
     // step over 'def' token onto bytecode value
     head = head->next;
     if (head->type != ATOM) {
-        printf("first argument to def is not an atom\n");
+        // printf("first argument to def is not an atom\n");
         return MISSING_BINNAME;
     }
 

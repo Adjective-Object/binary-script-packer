@@ -139,7 +139,7 @@ bool test_fndef(function_def * expected, const char * str) {
     // create a reference language for parsing against
     language_def language;
     language.function_name_width = 8;
-    language.function_name_bitshift = 0;
+    language.function_name_bitshift = 2;
     language.function_ct = 0;
     language.function_capacity = 0;
     language.functions = NULL;
@@ -178,7 +178,9 @@ PARSE_ERROR test_parse(
 
     // parse the sweet expression string to a function def
     swexp_list_node * swexp_list = parse_string_to_atoms(str, 255);
-    PARSE_ERROR e = parse_fn(out, &lang, swexp_list);
+    PARSE_ERROR e = parse_fn(
+            out, &lang, 
+            (swexp_list_node *) swexp_list->content);
     free_list(swexp_list);
 
     return e;
@@ -218,6 +220,13 @@ void mu_test_parse_function() {
     fn_err(MISSING_DEF, "0x10 demofn skip6 int4(gfx)");
     fn_err(MISSING_BINNAME, "def int4(gfx)");
     fn_err(MALFORMED_BINNAME, "def aa demofn int4(demofn)");
+
+    fn_err(FUNCTION_BINNAME_PRECISION, "def 0b01");
+    fn_err(FUNCTION_BINNAME_PRECISION, "def 0b10");
+    fn_err(FUNCTION_BINNAME_SIZE, "def 1025, skip6");
+    fn_err(NO_ERROR, "def 1024, skip6");
+
+    fn_err(MISSING_NAME, "def 0x19 int4(demofn)");
 
 }
 
