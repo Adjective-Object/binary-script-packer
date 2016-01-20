@@ -41,6 +41,12 @@ test: $(test)
 	valgrind --quiet --leak-check=full --trace-children=yes \
 		./$(test) -vv
 
+format: $(lib_src) $(program_src)
+	clang-format -i $^
+
+lint: $(lib_src) $(program_src)
+	splint $^
+
 tests/suite_runner.c: $(test_obj)
 	tests/mkmutest mutest.h $(test_obj) > $@
 

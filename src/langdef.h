@@ -12,14 +12,14 @@ typedef enum arg_type {
     UNSIGNED_INT,
     FLOAT, // IEEE float  
     SKIP,
-    __ARG_TYPE_CT,
+    __ARG_TYPE_CT
 } arg_type;
 
 extern const char * typenames[];
 
 typedef enum endianness {
     BIG_ENDIAN,
-    LITTLE_ENDIAN,
+    LITTLE_ENDIAN
 } endianness;
 
 typedef struct argument_def {

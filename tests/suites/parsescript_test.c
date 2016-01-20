@@ -156,13 +156,20 @@ bool test_fndef(function_def * expected, const char * str) {
     mu_check(p == NO_ERROR);
     
     // compare the function defs
-    bool toret = compare_function_defs(expected, &output);
+    bool matches = compare_function_defs(expected, &output);
+
+    if (!matches) {
+        printf("expected: ");
+        print_fn(&language, expected);
+        printf("received ");
+        print_fn(&language, &output);
+    }
 
     // free the swexp list and the functoin def
     free_list(swexp_list);
     free_fn(&output); 
 
-    return toret;
+    return matches;
 }
 
 PARSE_ERROR test_parse(
@@ -171,7 +178,7 @@ PARSE_ERROR test_parse(
     // create a reference language
     language_def lang;
     lang.function_name_width = 8;
-    lang.function_name_bitshift = 0;
+    lang.function_name_bitshift = 2;
     lang.function_ct = 0;
     lang.function_capacity = 0;
     lang.functions = NULL;
@@ -187,6 +194,9 @@ PARSE_ERROR test_parse(
 }
 
 #define fn_err(err, str) \
+    if (err != test_parse(&o, str)) \
+        printf("expected error %d, got err %d\n", \
+                err, test_parse(&o, str)); \
     mu_check(err == test_parse(&o, str)); \
     mu_check(0 == memcmp(&o, &ref_arr, sizeof(function_def)))
 
@@ -199,7 +209,7 @@ void mu_test_parse_function() {
         a_2 = {INT, 4, "gfx"};
     argument_def * argz[] = {&a_1, &a_2};
     function_def f = {
-        .function_binary_value = 0x10,
+        .function_binary_value = (0x10 >> 2),
         .name = "demofn",
         .argc = 2,
         .arguments = argz,
@@ -223,10 +233,10 @@ void mu_test_parse_function() {
 
     fn_err(FUNCTION_BINNAME_PRECISION, "def 0b01");
     fn_err(FUNCTION_BINNAME_PRECISION, "def 0b10");
-    fn_err(FUNCTION_BINNAME_SIZE, "def 1025, skip6");
-    fn_err(NO_ERROR, "def 1024, skip6");
+    fn_err(FUNCTION_BINNAME_SIZE, "def 4100 skip6");
 
-    fn_err(MISSING_NAME, "def 0x19 int4(demofn)");
+
+    fn_err(MISSING_NAME, "def 0x20 int4(demofn)");
 
 }
 
