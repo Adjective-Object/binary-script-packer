@@ -19,8 +19,8 @@ program_obj = $(program_src:.c=.o)
 mutest_obj = $(mutest_src:.c=.o)
 test_obj = $(test_src:.c=.o)
 
-CFLAGS = -g -Wall -std=c99 -Isrc -D_POSIX_SOURCE
-LDFLAGS = -lsweetexpressions -lm
+CFLAGS = -g -Wall -std=c99 -Isrc -Ilibsweetparse/src -D_POSIX_SOURCE
+LDFLAGS = -Llibsweetparse -lsweetexpressions -lm
 
 all: $(program) $(test)
 
