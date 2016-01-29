@@ -1,4 +1,8 @@
 *.o
 *.d
 *.swp
+scripter
+scripter_tests
+.ycm_*
+
 
