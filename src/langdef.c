@@ -10,9 +10,12 @@
 #include "util.h"
 #include "bitbuffer.h"
 
-const char *typenames[] = {[RAW_STRING] = "raw_str", [STRING] = "str",
-                           [INT] = "int",            [UNSIGNED_INT] = "uint",
-                           [FLOAT] = "float",        [SKIP] = "skip" };
+const char *typenames[] = {[RAW_STRING] = "raw_str",
+                           [STRING] = "str",
+                           [INT] = "int",
+                           [UNSIGNED_INT] = "uint",
+                           [FLOAT] = "float",
+                           [SKIP] = "skip" };
 
 bool check_size(arg_type type, unsigned int space, unsigned int value) {
     // check that the value provided can fit into the
