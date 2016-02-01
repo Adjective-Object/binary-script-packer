@@ -1,8 +1,15 @@
+# build intermediates
 *.o
 *.d
-*.swp
+
+# build products
 scripter
 scripter_tests
-.ycm_*
 
+# vim workflow stuff
+.ycm_*
+*.swp
+
+# nixos shell outputs
+result
 
