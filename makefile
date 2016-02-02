@@ -44,13 +44,16 @@ test: $(test)
 format: $(lib_src) $(program_src)
 	clang-format -i $^
 
-lint: $(lib_src) $(program_src)
+
+lint: lint_src lint_tests
+
+lint_%: $(lib_src) $(program_src)
 	cppcheck \
 		--std=c99 \
 		--enable=warning \
 		--enable=missingInclude \
 		--enable=performance \
-		-I ./src -I ./libsweetparse/src src/
+		-I ./src -I ./libsweetparse/src $*
 
 tests/suite_runner.c: $(test_obj)
 	tests/mkmutest mutest.h $(test_obj) > $@
