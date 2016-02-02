@@ -217,6 +217,21 @@ void mu_test_parse_function() {
 
     mu_check(test_fndef(&f, "def 0x10 demofn skip6 int4(gfx)"));
 
+    //////////////////////////////////////
+    // function with no arguments check //
+    //////////////////////////////////////
+    /*
+    argument_def ** argz_empty = NULL;
+    function_def f_empty = {
+        .function_binary_value = (0x10 >> 2),
+        .name = "empty_demofn",
+        .argc = 2,
+        .arguments = argz_empty,
+    }; */
+
+    mu_check(test_fndef(&f_empty, "empty_def 0x10 demofn"));
+
+
     /////////////////////////////////
     // check malformed definitions //
     /////////////////////////////////
@@ -234,7 +249,6 @@ void mu_test_parse_function() {
     fn_err(FUNCTION_BINNAME_PRECISION, "def 0b01");
     fn_err(FUNCTION_BINNAME_PRECISION, "def 0b10");
     fn_err(FUNCTION_BINNAME_SIZE, "def 4100 skip6");
-
 
     fn_err(MISSING_NAME, "def 0x20 int4(demofn)");
 

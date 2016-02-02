@@ -34,17 +34,24 @@ $(program): $(program_obj) $(lib_obj)
 # TESTS #
 #########
 
-$(test): $(mutest_obj) $(test_obj) $(lib_obj) tests/suite_runner.o
-	gcc $(LDFLAGS) $^ -o $@
-
+# runs the tests
 test: $(test)
 	LD_LIBRARY_PATH="$$LD_LIBRARY_PATH:./libsweetparse" valgrind --quiet --leak-check=full --trace-children=yes \
 		./$(test) -vv
 
+# build the test executable
+$(test): $(mutest_obj) $(test_obj) $(lib_obj) tests/suite_runner.o
+	gcc $(LDFLAGS) $^ -o $@
+
+# build the suite_runner thing
+tests/suite_runner.c: $(test_obj)
+	tests/mkmutest mutest.h $(test_obj) > $@
+
+# format code
 format: $(lib_src) $(program_src)
 	clang-format -i $^
 
-
+# lint code
 lint: lint_src lint_tests
 
 lint_%: $(lib_src) $(program_src)
@@ -54,9 +61,6 @@ lint_%: $(lib_src) $(program_src)
 		--enable=missingInclude \
 		--enable=performance \
 		-I ./src -I ./libsweetparse/src $*
-
-tests/suite_runner.c: $(test_obj)
-	tests/mkmutest mutest.h $(test_obj) > $@
 
 ################
 # MISC UTILITY #
