@@ -20,7 +20,7 @@ mutest_obj = $(mutest_src:.c=.o)
 test_obj = $(test_src:.c=.o)
 
 CFLAGS = -g -Wall -std=c99 -Isrc -Ilibsweetparse/src -D_POSIX_SOURCE
-LDFLAGS = -Llibsweetparse -lsweetexpressions -lm
+LDFLAGS = -L./libsweetparse -lsweetexpressions -lm
 
 all: $(program) $(test)
 
@@ -38,7 +38,7 @@ $(test): $(mutest_obj) $(test_obj) $(lib_obj) tests/suite_runner.o
 	gcc $(LDFLAGS) $^ -o $@
 
 test: $(test)
-	valgrind --quiet --leak-check=full --trace-children=yes \
+	LD_LIBRARY_PATH="$$LD_LIBRARY_PATH:./libsweetparse" valgrind --quiet --leak-check=full --trace-children=yes \
 		./$(test) -vv
 
 format: $(lib_src) $(program_src)

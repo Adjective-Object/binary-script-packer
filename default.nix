@@ -3,10 +3,14 @@ in with pkgs; let
     
     devDependencies = [
         stdenv
+        # build
         gcc
         gnumake
+
+        # check
         llvmPackages.clang-unwrapped # for clang-format
         cppcheck
+        valgrind
     ];
     
     dependencies = [
