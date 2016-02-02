@@ -197,6 +197,10 @@ PARSE_ERROR parse_fn(function_def *f, language_def *l, swexp_list_node *node) {
 
     for (; head != NULL; head = head->next) {
         arguments = realloc(arguments, sizeof(argument_def *) * (argc + 1));
+        if (arguments == NULL) {
+            perror("realloc argument array");
+            exit(1);
+        }
         argument_def *argument = malloc(sizeof(argument_def));
         argument->name = NULL;
 

@@ -80,7 +80,7 @@ char *type_name(arg_type t) {
 }
 
 void print_lang(language_def *l) {
-    printf("endian=%d, width=%d, bitshift=%d\n", (int)l->target_endianness,
+    printf("endian=%d, width=%u, bitshift=%u\n", (int)l->target_endianness,
            l->function_name_width, l->function_name_bitshift);
     for (unsigned int i = 0; i < l->function_ct; i++) {
         print_fn(l, l->functions[i]);
@@ -92,7 +92,7 @@ void print_fn(language_def *l, function_def *f) {
            f->name);
     for (unsigned int j = 0; j < f->argc; j++) {
         argument_def *a = f->arguments[j];
-        printf("<%s:%d %s> ", type_name(a->type), a->bitwidth, a->name);
+        printf("<%s:%u %s> ", type_name(a->type), a->bitwidth, a->name);
     }
     printf("\n");
 }
@@ -256,7 +256,7 @@ void arg_write(bitbuffer *out_buffer, language_def *l, argument_def *argdef,
             bitbuffer_writeblock(out_buffer, &f, sizeof(float));
             return;
         default:
-            printf("tried to switch on unhandled float bitwidth %d",
+            printf("tried to switch on unhandled float bitwidth %u",
                    argdef->bitwidth);
             exit(1);
         }

@@ -6,7 +6,7 @@ in with pkgs; let
         gcc
         gnumake
         llvmPackages.clang-unwrapped # for clang-format
-        splint
+        cppcheck
     ];
     
     dependencies = [

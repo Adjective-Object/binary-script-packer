@@ -45,7 +45,12 @@ format: $(lib_src) $(program_src)
 	clang-format -i $^
 
 lint: $(lib_src) $(program_src)
-	splint $^
+	cppcheck \
+		--std=c99 \
+		--enable=warning \
+		--enable=missingInclude \
+		--enable=performance \
+		-I ./src -I ./libsweetparse/src src/
 
 tests/suite_runner.c: $(test_obj)
 	tests/mkmutest mutest.h $(test_obj) > $@

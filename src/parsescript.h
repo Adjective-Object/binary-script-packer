@@ -2,7 +2,6 @@
 #define BINARY_SCRIPTER
 
 #include "sweetexpressions.h"
-#include "endian.h"
 #include <stdbool.h>
 
 #include "langdef.h"
