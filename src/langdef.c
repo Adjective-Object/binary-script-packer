@@ -305,8 +305,12 @@ void free_fn(function_def *fn) {
     for (size_t i = 0; i < fn->argc; i++) {
         free_arg(fn->arguments[i]);
     }
-    free(fn->name);
-    free(fn->arguments);
+
+    if (fn->name != NULL)
+        free(fn->name);
+
+    if (fn->arguments != NULL)
+        free(fn->arguments);
 }
 
 void free_arg(argument_def *argdef) {

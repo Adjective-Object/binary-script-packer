@@ -236,6 +236,11 @@ PARSE_ERROR parse_fn(function_def *f, language_def *l, swexp_list_node *node) {
     }
 
     f->function_binary_value = cont >> l->function_name_bitshift;
+    if (argc == 0) {
+        free(arguments);
+        arguments= NULL;
+    }
+
     f->arguments = arguments;
     f->argc = argc;
     return NO_ERROR;

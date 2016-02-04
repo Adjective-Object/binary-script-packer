@@ -220,16 +220,15 @@ void mu_test_parse_function() {
     //////////////////////////////////////
     // function with no arguments check //
     //////////////////////////////////////
-    /*
     argument_def ** argz_empty = NULL;
     function_def f_empty = {
         .function_binary_value = (0x10 >> 2),
-        .name = "empty_demofn",
-        .argc = 2,
+        .name = "empty_def",
+        .argc = 0,
         .arguments = argz_empty,
-    }; */
+    };
 
-    mu_check(test_fndef(&f_empty, "empty_def 0x10 demofn"));
+    mu_check(test_fndef(&f_empty, "def empty_def 0x10 demofn"));
 
 
     /////////////////////////////////
