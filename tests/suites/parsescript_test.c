@@ -278,15 +278,15 @@ bool test_language(
             reference_lang->target_endianness,
             parsed_lang.target_endianness);
 
-        printf("    name width %d %d \n",
+        printf("    name width %u %u \n",
             reference_lang->function_name_width,
             parsed_lang.function_name_width);
 
-        printf("    name bitwidth %d %d \n",
+        printf("    name bitwidth %u %u \n",
             reference_lang->function_name_bitshift,
             parsed_lang.function_name_bitshift);
   
-        printf("    function count %d %d \n",
+        printf("    function count %u %u \n",
             reference_lang->function_ct,
             parsed_lang.function_ct);
         return false;

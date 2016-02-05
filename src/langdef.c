@@ -275,8 +275,7 @@ void arg_write(bitbuffer *out_buffer, language_def *l, argument_def *argdef,
     }
 }
 
-
-void lang_init(language_def * lang) {
+void lang_init(language_def *lang) {
     lang->target_endianness = LITTLE_ENDIAN;
     lang->function_name_width = 8;
     lang->function_name_bitshift = 0;

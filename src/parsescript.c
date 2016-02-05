@@ -238,7 +238,7 @@ PARSE_ERROR parse_fn(function_def *f, language_def *l, swexp_list_node *node) {
     f->function_binary_value = cont >> l->function_name_bitshift;
     if (argc == 0) {
         free(arguments);
-        arguments= NULL;
+        arguments = NULL;
     }
 
     f->arguments = arguments;
@@ -249,11 +249,9 @@ PARSE_ERROR parse_fn(function_def *f, language_def *l, swexp_list_node *node) {
 void parse_metadata_attr(language_def *l, swexp_list_node *node) {
     char *name = list_head(node)->content;
     char *value = list_head(node)->next->content;
-    if (strcmp(name, "endian") == 0 || 
-        strcmp(name, "endianness") == 0) {
+    if (strcmp(name, "endian") == 0 || strcmp(name, "endianness") == 0) {
 
-        if (strcmp(value, "big") == 0 || 
-            strcmp(value, "Big") == 0 ||
+        if (strcmp(value, "big") == 0 || strcmp(value, "Big") == 0 ||
             strcmp(value, "BIG") == 0) {
             l->target_endianness = BIG_ENDIAN;
         } else if (strcmp(value, "little") == 0 ||
@@ -297,9 +295,8 @@ PARSE_ERROR parse_language(language_def *language, swexp_list_node *head) {
     // initialie the language to holding no funcions
     lang_init(language);
 
-    for (swexp_list_node * current = list_head(head);
-            current != NULL;
-            current = current->next) {
+    for (swexp_list_node *current = list_head(head); current != NULL;
+         current = current->next) {
         if (current->type == LIST) {
             char *content = list_head(current)->content;
             if (strcmp(content, "def") == 0) {
@@ -323,19 +320,16 @@ PARSE_ERROR parse_language(language_def *language, swexp_list_node *head) {
     return NO_ERROR;
 }
 
-PARSE_ERROR parse_language_from_file(
-        language_def* language, FILE * f) {
-    swexp_list_node * nodes = parse_file_to_atoms(f, 255);
+PARSE_ERROR parse_language_from_file(language_def *language, FILE *f) {
+    swexp_list_node *nodes = parse_file_to_atoms(f, 255);
     PARSE_ERROR p = parse_language(language, nodes);
     free_list(nodes);
     return p;
 }
 
-PARSE_ERROR parse_language_from_str(
-        language_def* language, char *c) {
-    swexp_list_node * nodes = parse_string_to_atoms(c, 255);
+PARSE_ERROR parse_language_from_str(language_def *language, char *c) {
+    swexp_list_node *nodes = parse_string_to_atoms(c, 255);
     PARSE_ERROR p = parse_language(language, nodes);
     free_list(nodes);
     return p;
 }
-
