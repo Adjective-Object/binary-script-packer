@@ -98,6 +98,33 @@ enum {
 /* check that an expression evaluates to true, continue if the check fails */
 #define mu_check(exp) mu_check_base(exp, "mu_check", "resuming", continue)
 
+/* check that an expression evaluates to true, continue if the check fails */
+#define mu_eq_base(type, val, exp, name, action, final) \
+	do { \
+		mu_print(MU_CHECK, "\t\t* Checking " name "("#type", "#val", "#exp ")...\n"); \
+		mutest_try \
+            type __mu_tmp = exp; \
+			if (val == __mu_tmp) mutest_count_suc \
+			else { \
+				mutest_count_err \
+				mu_print(MU_ERROR, "\n" name "(" #type ", " #val ", " #exp ")\n"); \
+				mu_print(MU_ERROR, "expected (" #val "), got (%d)\n", __mu_tmp); \
+                mu_printerr(name, action); \
+				final; \
+			} \
+		mutest_catch(name, action, final) \
+	} while (0)
+
+#define mu_eq(type, val, exp) \
+    mu_eq_base(type, val, exp, "mu_eq", "resuming", continue)
+
+#define mu_ensure_eq(type, val, exp) \
+    mu_eq_base(type, val, exp, "mu_ensure_eq", "resuming", exit(1))
+
+
+
+
+
 /*
  * ensure that an expression evaluates to true, abort the current test
  * case if the check fails

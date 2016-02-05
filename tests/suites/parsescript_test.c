@@ -152,8 +152,7 @@ bool test_fndef(function_def * expected, const char * str) {
             &output, &language, 
             (swexp_list_node *) swexp_list->content);
     
-    // check if there was an error
-    mu_check(p == NO_ERROR);
+    mu_eq(PARSE_ERROR, NO_ERROR, p);
     
     // compare the function defs
     bool matches = compare_function_defs(expected, &output);
@@ -194,10 +193,7 @@ PARSE_ERROR test_parse(
 }
 
 #define fn_err(err, str) \
-    if (err != test_parse(&o, str)) \
-        printf("expected error %d, got err %d\n", \
-                err, test_parse(&o, str)); \
-    mu_check(err == test_parse(&o, str)); \
+    mu_eq(PARSE_ERROR, err, test_parse(&o, str)); \
     mu_check(0 == memcmp(&o, &ref_arr, sizeof(function_def)))
 
 void mu_test_parse_function() {
@@ -228,7 +224,7 @@ void mu_test_parse_function() {
         .arguments = argz_empty,
     };
 
-    mu_check(test_fndef(&f_empty, "def empty_def 0x10 demofn"));
+    mu_check(test_fndef(&f_empty, "def 0x10 empty_def"));
 
 
     /////////////////////////////////
@@ -250,6 +246,146 @@ void mu_test_parse_function() {
     fn_err(FUNCTION_BINNAME_SIZE, "def 4100 skip6");
 
     fn_err(MISSING_NAME, "def 0x20 int4(demofn)");
-
 }
 
+bool test_language(
+        PARSE_ERROR expected_error, 
+        language_def * reference_lang, char * str) {
+    language_def parsed_lang;
+    memset(&parsed_lang, 0, sizeof(language_def));
+
+    PARSE_ERROR parse_error = 
+        parse_language_from_str(&parsed_lang, str);
+
+    if (parse_error != expected_error) {
+        printf("mismatch in error\n");
+        return false;
+    }
+
+    // Check the metadata attributes
+    // and number of functions
+    if (reference_lang->target_endianness 
+            != parsed_lang.target_endianness ||
+        reference_lang->function_name_width 
+            != parsed_lang.function_name_width ||
+        reference_lang->function_name_bitshift 
+            != parsed_lang.function_name_bitshift ||
+        reference_lang->function_ct 
+            != parsed_lang.function_ct) {
+        printf("    different metadata\n");
+        
+        printf("    endianness %d %d \n",
+            reference_lang->target_endianness,
+            parsed_lang.target_endianness);
+
+        printf("    name width %d %d \n",
+            reference_lang->function_name_width,
+            parsed_lang.function_name_width);
+
+        printf("    name bitwidth %d %d \n",
+            reference_lang->function_name_bitshift,
+            parsed_lang.function_name_bitshift);
+  
+        printf("    function count %d %d \n",
+            reference_lang->function_ct,
+            parsed_lang.function_ct);
+        return false;
+    }
+
+    // Check the function definitions
+    for (int i=0; i < parsed_lang.function_ct; i++) {
+        if (!compare_function_defs(
+                    reference_lang->functions[i],
+                    parsed_lang.functions[i])) {
+            printf("different function in slot %d\n", i);
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void mu_test_parse_language() {
+    language_def lang;
+    lang_init(&lang);
+
+    ///////////////////////////////////////
+    // Empty Language. no attributes set //
+    ///////////////////////////////////////
+    mu_check(test_language(NO_ERROR, &lang, ""));
+
+    ///////////////////////////////////////////
+    // Check the default metadata parameters //
+    ///////////////////////////////////////////
+    mu_check(test_language(
+        NO_ERROR, &lang,
+        "meta \n"
+        "    endianness little \n"
+        "    namewidth 8 \n"
+        "    nameshift 0 \n"
+        ));
+
+    mu_check(test_language(
+        NO_ERROR, &lang,
+        "meta \n"
+        "    endianness LITTLE \n"
+        "    namewidth 8 \n"
+        "    nameshift 0 \n"
+        ));
+
+    mu_check(test_language(
+        NO_ERROR, &lang,
+        "meta \n"
+        "    endianness Little \n"
+        "    namewidth 8 \n"
+        "    nameshift 0 \n"
+        ));
+
+    //////////////////////////////////////////////////////
+    // Check that metadata attritbutes are set properly //
+    //////////////////////////////////////////////////////
+   
+    lang.target_endianness = BIG_ENDIAN;
+    lang.function_name_width = 9; 
+    lang.function_name_bitshift = 1;
+
+    mu_check(test_language(
+        NO_ERROR, &lang,
+        "meta \n"
+        "    endianness big \n"
+        "    namewidth 9 \n"
+        "    nameshift 1 \n"
+        ));
+
+    mu_check(test_language(
+        NO_ERROR, &lang,
+        "meta \n"
+        "    endianness Big \n"
+        "    namewidth 9 \n"
+        "    nameshift 1 \n"
+        ));
+
+    mu_check(test_language(
+        NO_ERROR, &lang,
+        "meta \n"
+        "    endianness BIG \n"
+        "    namewidth 9 \n"
+        "    nameshift 1 \n"
+        ));
+
+
+
+    // TODO //
+    /*
+    mu_check(test_language(
+        NO_ERROR, &lang,
+        "MY BIG OL LANGUAGE \n"
+        "SO FUKKIN BIG \n"
+        ));
+    */
+
+
+
+
+
+}

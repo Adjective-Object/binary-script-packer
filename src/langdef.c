@@ -275,6 +275,16 @@ void arg_write(bitbuffer *out_buffer, language_def *l, argument_def *argdef,
     }
 }
 
+
+void lang_init(language_def * lang) {
+    lang->target_endianness = LITTLE_ENDIAN;
+    lang->function_name_width = 8;
+    lang->function_name_bitshift = 0;
+    lang->function_ct = 0;
+    lang->function_capacity = 0;
+    lang->functions = NULL;
+}
+
 function_def *lang_getfn(language_def *l, unsigned int binary_value) {
     unsigned int i;
     for (i = 0; i < l->function_ct; i++) {

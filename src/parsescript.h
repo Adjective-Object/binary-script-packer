@@ -98,7 +98,17 @@ function_call * parse_fn_call(swexp_list_node * call, language_def * l);
  * f: pointer to a FILE containing a series of s-expressions
  *      that define functions or that define language metadata
  **/
-void parse_language(language_def * language, FILE * f);
+PARSE_ERROR parse_language(language_def * language, swexp_list_node *list);
+
+// TODO document these
+
+void lang_init(language_def * lang);
+
+PARSE_ERROR parse_language_from_file(
+        language_def* language, FILE * f);
+
+PARSE_ERROR parse_language_from_str(
+        language_def* language, char *c);
 
 /**
  * parses a metadata block from a language definition and sets the

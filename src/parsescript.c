@@ -249,8 +249,11 @@ PARSE_ERROR parse_fn(function_def *f, language_def *l, swexp_list_node *node) {
 void parse_metadata_attr(language_def *l, swexp_list_node *node) {
     char *name = list_head(node)->content;
     char *value = list_head(node)->next->content;
-    if (strcmp(name, "endian") == 0 || strcmp(name, "endianness") == 0) {
-        if (strcmp(value, "big") == 0 || strcmp(value, "Big") == 0 ||
+    if (strcmp(name, "endian") == 0 || 
+        strcmp(name, "endianness") == 0) {
+
+        if (strcmp(value, "big") == 0 || 
+            strcmp(value, "Big") == 0 ||
             strcmp(value, "BIG") == 0) {
             l->target_endianness = BIG_ENDIAN;
         } else if (strcmp(value, "little") == 0 ||
@@ -261,14 +264,18 @@ void parse_metadata_attr(language_def *l, swexp_list_node *node) {
             printf("Unrecognized value %s for endianness declaration\n", value);
             printf("only values big/Big/BIG/little/Little/LITTLE are valid");
         }
+
     } else if (strcmp(name, "namewidth") == 0 ||
                strcmp(name, "functionwidth") == 0 ||
                strcmp(name, "funcwidth") == 0) {
+
         l->function_name_width = uparse_int(value);
+
     } else if (strcmp(name, "nameshift") == 0) {
         l->function_name_bitshift = uparse_int(value);
+
     } else {
-        printf("unrecgonized metadata attr '%s'", name);
+        printf("unrecgonized metadata attr '%s'\n", name);
         exit(1);
     }
 }
@@ -286,16 +293,13 @@ void parse_metadata(language_def *l, swexp_list_node *metadata_decl) {
     }
 }
 
-void parse_language(language_def *language, FILE *f) {
-    // parse the file to a list of atoms
-    swexp_list_node *head = parse_file_to_atoms(f, 255), *current;
-
+PARSE_ERROR parse_language(language_def *language, swexp_list_node *head) {
     // initialie the language to holding no funcions
-    language->function_ct = 0;
-    language->function_capacity = 0;
-    language->functions = NULL;
+    lang_init(language);
 
-    for (current = list_head(head); current != NULL; current = current->next) {
+    for (swexp_list_node * current = list_head(head);
+            current != NULL;
+            current = current->next) {
         if (current->type == LIST) {
             char *content = list_head(current)->content;
             if (strcmp(content, "def") == 0) {
@@ -316,7 +320,22 @@ void parse_language(language_def *language, FILE *f) {
             exit(1);
         }
     }
-
-    // free the contents of the list
-    free_list(head);
+    return NO_ERROR;
 }
+
+PARSE_ERROR parse_language_from_file(
+        language_def* language, FILE * f) {
+    swexp_list_node * nodes = parse_file_to_atoms(f, 255);
+    PARSE_ERROR p = parse_language(language, nodes);
+    free_list(nodes);
+    return p;
+}
+
+PARSE_ERROR parse_language_from_str(
+        language_def* language, char *c) {
+    swexp_list_node * nodes = parse_string_to_atoms(c, 255);
+    PARSE_ERROR p = parse_language(language, nodes);
+    free_list(nodes);
+    return p;
+}
+

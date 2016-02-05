@@ -72,6 +72,9 @@ function_call * func_getcall(function_def * d, void * call);
 void * arg_init(language_def * l, argument_def * def, bitbuffer * buffer);
 void arg_write(bitbuffer * out_buffer, language_def * l, argument_def * def, void * arg);
 
+
+void lang_init(language_def * lang);
+
 size_t func_call_width(language_def * l, function_def * def);
 
 
