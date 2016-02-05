@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
     }
 
     language_def *l = malloc(sizeof(language_def));
-    parse_language(l, lang_file);
+    parse_language_from_file(l, lang_file);
 
     printf("Language definition:\n");
     print_lang(l);
