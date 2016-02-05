@@ -14,21 +14,34 @@ typedef enum PARSE_ERROR {
     BAD_DECIMAL_FORMAT = 2,
     BAD_HEX_FORMAT = 3,
     BAD_BINARY_FORMAT = 4,
+    ILLEGAL_SIGN = 4,
 
     // argument parsing errors
-    UNKNOWN_ARGTYPE = 5,
-    DISALLOWED_SIZE = 6,
-    UNSPECIFIED_SIZE = 7,
+    UNKNOWN_ARGTYPE = 6,
+    DISALLOWED_SIZE = 7,
+    UNSPECIFIED_SIZE = 8,
 
-    MISSING_DEF = 8,
-    MISSING_BINNAME = 9,
-    MALFORMED_BINNAME = 10,
-    MISSING_NAME = 11,
-    FUNCTION_BINNAME_PRECISION = 12,
-    FUNCTION_BINNAME_SIZE = 13,
-    MALFORMED_ARGUMENT_DECLARATION = 14,
+    // function parsing errors
+    MISSING_DEF = 9,
+    MISSING_BINNAME = 10,
+    MALFORMED_BINNAME = 11,
+    MISSING_NAME = 12,
+    FUNCTION_BINNAME_PRECISION = 13,
+    FUNCTION_BINNAME_SIZE = 14,
+    MALFORMED_ARGUMENT_DECLARATION = 15,
 
+    // metadata parsing errors
+    MISPLACED_METADATA_BLOCK = 16,
+    UNKNOWN_METADATA_ATTRIBUTE = 17,
+    MALFORMED_METADATA_ATTRIBUTE = 18,
+    DUPLICATE_METADATA_ATTRIBUTE = 19,
 } PARSE_ERROR;
+
+typedef struct detailed_parse_error {
+    PARSE_ERROR primitive_error;
+    swexp_list_node * error_location;
+    char * error_message;
+} detailed_parse_error;
 
 /**
  * Parses an integer from a  decimal, hex or binary string.
@@ -118,12 +131,12 @@ PARSE_ERROR parse_language_from_str(
  * language: the language the metadata applies to
  * metadata_decl: the declaratin of the metadata as a swexp list
  **/
-void parse_metadata(language_def *language, swexp_list_node * metadata_decl);
+PARSE_ERROR parse_metadata(language_def *language, swexp_list_node * metadata_decl);
 
 /**
  * parses a single metadata attribute 
  **/
-void parse_metadata_attr(language_def * l, swexp_list_node * node);
+PARSE_ERROR parse_metadata_attr(language_def * l, swexp_list_node * node);
 
 
 

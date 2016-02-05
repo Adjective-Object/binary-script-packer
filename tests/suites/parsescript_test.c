@@ -57,37 +57,37 @@ void mu_test_parse_argtype() {
     argument.name = NULL;
 
     // check that the number parsing works in any mode
-    mu_check(NO_ERROR == parse_argtype(&argument, "int32"));
-    mu_check(argument.type == INT);
-    mu_check(argument.bitwidth == 32);
+    mu_eq(PARSE_ERROR, NO_ERROR, parse_argtype(&argument, "int32"));
+    mu_eq(arg_type, INT, argument.type);
+    mu_eq(int, 32, argument.bitwidth);
 
-    mu_check(NO_ERROR == parse_argtype(&argument, "int0x21"));
-    mu_check(argument.type == INT);
-    mu_check(argument.bitwidth == 33);
+    mu_eq(PARSE_ERROR, NO_ERROR, parse_argtype(&argument, "int0x21"));
+    mu_eq(arg_type, INT, argument.type);
+    mu_eq(int, 33, argument.bitwidth);
 
     int p = parse_argtype(&argument, "int0b100010");
-    mu_check(NO_ERROR == p);
-    mu_check(argument.type == INT);
-    mu_check(argument.bitwidth == 34);
+    mu_eq(PARSE_ERROR, NO_ERROR, p);
+    mu_eq(arg_type, INT, argument.type);
+    mu_eq(int, 34, argument.bitwidth);
 
     // check that each of the base types can be parsed
-    mu_check(NO_ERROR == parse_argtype(&argument, "raw_str32"));
-    mu_check(argument.type == RAW_STRING);
+    mu_eq(PARSE_ERROR, NO_ERROR, parse_argtype(&argument, "raw_str32"));
+    mu_eq(arg_type, RAW_STRING, argument.type);
     
-    mu_check(NO_ERROR == parse_argtype(&argument, "str32"));
-    mu_check(argument.type == STRING);
+    mu_eq(PARSE_ERROR, NO_ERROR, parse_argtype(&argument, "str32"));
+    mu_eq(arg_type, STRING, argument.type);
 
-    mu_check(NO_ERROR == parse_argtype(&argument, "int32"));
-    mu_check(argument.type == INT);
+    mu_eq(PARSE_ERROR, NO_ERROR, parse_argtype(&argument, "int32"));
+    mu_eq(arg_type, INT, argument.type);
 
-    mu_check(NO_ERROR == parse_argtype(&argument, "uint32"));
-    mu_check(argument.type == UNSIGNED_INT);
+    mu_eq(PARSE_ERROR, NO_ERROR, parse_argtype(&argument, "uint32"));
+    mu_eq(arg_type, UNSIGNED_INT, argument.type);
 
-    mu_check(NO_ERROR == parse_argtype(&argument, "float32"));
-    mu_check(argument.type == FLOAT);
+    mu_eq(PARSE_ERROR, NO_ERROR, parse_argtype(&argument, "float32"));
+    mu_eq(arg_type, FLOAT, argument.type);
 
-    mu_check(NO_ERROR == parse_argtype(&argument, "skip32"));
-    mu_check(argument.type == SKIP);
+    mu_eq(PARSE_ERROR, NO_ERROR, parse_argtype(&argument, "skip32"));
+    mu_eq(arg_type, SKIP, argument.type);
 
     // Check that constraints on each type's sizes are enforced
     //
@@ -258,7 +258,22 @@ bool test_language(
         parse_language_from_str(&parsed_lang, str);
 
     if (parse_error != expected_error) {
-        printf("mismatch in error\n");
+        printf("mismatch in error expected = %u, parsed = %u\n",
+                expected_error, parse_error);
+        free_lang(&parsed_lang);
+        return false;
+    } else if (parse_error != NO_ERROR) {
+        free_lang(&parsed_lang);
+        return true;
+    }
+
+    if (reference_lang == NULL) {
+        if (expected_error == NO_ERROR)
+            printf("no error thrown on null language\n");
+        else
+            printf("no error expected on null language??\n");
+        
+        free_lang(&parsed_lang);
         return false;
     }
 
@@ -289,6 +304,7 @@ bool test_language(
         printf("    function count %u %u \n",
             reference_lang->function_ct,
             parsed_lang.function_ct);
+        free_lang(&parsed_lang);
         return false;
     }
 
@@ -298,14 +314,17 @@ bool test_language(
                     reference_lang->functions[i],
                     parsed_lang.functions[i])) {
             printf("different function in slot %d\n", i);
+            free_lang(&parsed_lang);
             return false;
         }
     }
 
+    free_lang(&parsed_lang);
+
     return true;
 }
 
-void mu_test_parse_language() {
+void mu_test_parse_language_metadata() {
     language_def lang;
     lang_init(&lang);
 
@@ -373,19 +392,42 @@ void mu_test_parse_language() {
         "    nameshift 1 \n"
         ));
 
-
-
-    // TODO //
+    ////////////////////////////////////////////
+    // Check for errors in the metadata block //
+    ////////////////////////////////////////////
+    
+    mu_check(test_language(
+        MALFORMED_METADATA_ATTRIBUTE, NULL,
+        "meta \n"
+        "    endianness aaaaahhhhh \n"
+        ));
     /*
     mu_check(test_language(
-        NO_ERROR, &lang,
-        "MY BIG OL LANGUAGE \n"
-        "SO FUKKIN BIG \n"
+        DUPLICATE_METADATA_ATTRIBUTE, NULL,
+        "meta \n"
+        "    endianness BIG \n"
+        "    endianness LITTLE \n"
         ));
     */
 
+    mu_check(test_language(
+        UNKNOWN_METADATA_ATTRIBUTE, NULL,
+        "meta \n"
+        "    fake_attr bla \n"
+        ));
 
+    //////////////////////////////////////////////////////
+    // Errors on interacting fn defs and metadata block //
+    //////////////////////////////////////////////////////
 
-
+    mu_check(test_language(
+        MISPLACED_METADATA_BLOCK, NULL,
+         "meta \n"
+        "    endianness BIG \n"
+        "def 0x01 emptyfn \n"
+        "def 0x02 emptyfn2 \n"
+        "meta \n"
+        "    namewidth 3 \n"
+        )); 
 
 }

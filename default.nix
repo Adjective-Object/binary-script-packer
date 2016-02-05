@@ -19,7 +19,7 @@ in with pkgs; let
 
 in {
     devEnv = stdenv.mkDerivation {
-        name = "binscripter-dev";
+        name = "binscripter";
         buildInputs = devDependencies ++ dependencies;
     };
 }

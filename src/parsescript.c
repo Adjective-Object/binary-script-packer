@@ -19,6 +19,15 @@ int scan_binary(int *out, char *str) {
     return 0;
 }
 
+PARSE_ERROR parse_uint(unsigned int *i, char * str) {
+    int temp;
+    PARSE_ERROR err = parse_int(&temp, str);
+    if (err != NO_ERROR) return err;
+    if (temp < 0) return ILLEGAL_SIGN;
+    *i = temp;
+    return NO_ERROR;
+}
+
 PARSE_ERROR parse_int(int *out, char *str) {
     // get the leading '-' for negatives
     int sign = 1;
@@ -115,18 +124,11 @@ PARSE_ERROR parse_argtype(argument_def *argument, char *name) {
 
 void add_fn_to_lang(language_def *l, function_def *def) {
     if (l->function_ct + 1 >= l->function_capacity) {
-        l->functions = realloc(l->functions,
-                               sizeof(function_def *) * (l->function_ct + 1));
-    }
-
-    function_def *old_def;
-    if ((old_def = lang_getfn(l, def->function_binary_value)) != NULL) {
-        printf("tried to add overlapping function definition to language\n");
-        printf("previous function:\n    ");
-        print_fn(l, old_def);
-        printf("new function:\n    ");
-        print_fn(l, def);
-        exit(1);
+        l->functions = realloc(l->functions, sizeof(function_def *) * (l->function_ct + 1));
+        if (l->functions == NULL) {
+            printf("error in realloc\n");
+            exit(1);
+        }
     }
     l->functions[l->function_ct] = def;
     l->function_ct++;
@@ -198,7 +200,7 @@ PARSE_ERROR parse_fn(function_def *f, language_def *l, swexp_list_node *node) {
     for (; head != NULL; head = head->next) {
         arguments = realloc(arguments, sizeof(argument_def *) * (argc + 1));
         if (arguments == NULL) {
-            perror("realloc argument array");
+            perror("unrecoverable error when reallocing argument array\n");
             exit(1);
         }
         argument_def *argument = malloc(sizeof(argument_def));
@@ -246,7 +248,7 @@ PARSE_ERROR parse_fn(function_def *f, language_def *l, swexp_list_node *node) {
     return NO_ERROR;
 }
 
-void parse_metadata_attr(language_def *l, swexp_list_node *node) {
+PARSE_ERROR parse_metadata_attr(language_def *l, swexp_list_node *node) {
     char *name = list_head(node)->content;
     char *value = list_head(node)->next->content;
     if (strcmp(name, "endian") == 0 || strcmp(name, "endianness") == 0) {
@@ -259,54 +261,76 @@ void parse_metadata_attr(language_def *l, swexp_list_node *node) {
                    strcmp(value, "LITTLE") == 0) {
             l->target_endianness = LITTLE_ENDIAN;
         } else {
-            printf("Unrecognized value %s for endianness declaration\n", value);
-            printf("only values big/Big/BIG/little/Little/LITTLE are valid");
+            // printf("Unrecognized value '%s' for endianness declaration\n", value);
+            // printf("only values big/Big/BIG/little/Little/LITTLE are valid\n");
+            return MALFORMED_METADATA_ATTRIBUTE;
         }
 
     } else if (strcmp(name, "namewidth") == 0 ||
                strcmp(name, "functionwidth") == 0 ||
                strcmp(name, "funcwidth") == 0) {
-
-        l->function_name_width = uparse_int(value);
+        PARSE_ERROR e = parse_uint(&l->function_name_width, value);
+        // printf("namewidth error %d\n", e);
+        if (e != NO_ERROR) return MALFORMED_METADATA_ATTRIBUTE;
 
     } else if (strcmp(name, "nameshift") == 0) {
-        l->function_name_bitshift = uparse_int(value);
+        PARSE_ERROR e = parse_uint(&(l->function_name_bitshift), value);
+        // printf("nameshift error %d\n", e);
+        if (e != NO_ERROR) return MALFORMED_METADATA_ATTRIBUTE;
 
     } else {
-        printf("unrecgonized metadata attr '%s'\n", name);
-        exit(1);
+        //printf("unrecgonized metadata attr '%s'\n", name);
+        return UNKNOWN_METADATA_ATTRIBUTE;
     }
+
+    return NO_ERROR;
 }
 
-void parse_metadata(language_def *l, swexp_list_node *metadata_decl) {
+PARSE_ERROR parse_metadata(language_def *l, swexp_list_node *metadata_decl) {
     swexp_list_node *node;
     for (node = list_head(metadata_decl)->next; node != NULL;
          node = node->next) {
         if (node->type != LIST) {
-            printf("encountered non-list '%s' in metadata declaration\n",
-                   (char *)node->content);
-            exit(1);
+            // printf("encountered non-list '%s' in metadata declaration\n",
+            //        (char *)node->content);
+            return MALFORMED_METADATA_ATTRIBUTE;
         }
-        parse_metadata_attr(l, node);
+        PARSE_ERROR p = parse_metadata_attr(l, node);
+        if (p != NO_ERROR) return p;
     }
+    return NO_ERROR;
 }
 
 PARSE_ERROR parse_language(language_def *language, swexp_list_node *head) {
     // initialie the language to holding no funcions
+    // and give attributes for metadata;
     lang_init(language);
 
-    for (swexp_list_node *current = list_head(head); current != NULL;
+    // parse a metadata block as the first block if it exists
+    swexp_list_node * current = list_head(head);
+    if (current != NULL && 
+            0 == strcmp("meta", list_head(current)->content)) {
+        
+        PARSE_ERROR meta_error = parse_metadata(language, current);
+        if (meta_error != NO_ERROR) return meta_error;
+        
+        current = current->next;
+    }
+
+    for (; current != NULL;
          current = current->next) {
-        if (current->type == LIST) {
+        if (current->type == LIST)  {
             char *content = list_head(current)->content;
             if (strcmp(content, "def") == 0) {
                 // parse a function definition
                 function_def *f = malloc(sizeof(function_def));
                 parse_fn(f, language, current);
                 add_fn_to_lang(language, f);
-            } else if (strcmp(content, "meta") == 0) {
-                // parse metadata block
-                parse_metadata(language, current);
+            }
+            else if (strcmp(content, "meta") == 0) {
+                // throw an error if we encounter a metadatablock
+                // at the first block
+                return MISPLACED_METADATA_BLOCK;
             } else {
                 printf("unrecognized root level command '%s'\n", content);
                 exit(1);
@@ -330,6 +354,7 @@ PARSE_ERROR parse_language_from_file(language_def *language, FILE *f) {
 PARSE_ERROR parse_language_from_str(language_def *language, char *c) {
     swexp_list_node *nodes = parse_string_to_atoms(c, 255);
     PARSE_ERROR p = parse_language(language, nodes);
+    // printf("lang parse error %d\n", p);
     free_list(nodes);
     return p;
 }
