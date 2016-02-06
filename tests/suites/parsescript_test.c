@@ -415,18 +415,28 @@ void mu_test_parse_language_metadata() {
         "    fake_attr bla \n"
         ));
 
-    //////////////////////////////////////////////////////
-    // Errors on interacting fn defs and metadata block //
-    //////////////////////////////////////////////////////
+    //////////////////////////////////////////
+    // Errors on non-leading metadata block //
+    //////////////////////////////////////////
 
     mu_check(test_language(
         MISPLACED_METADATA_BLOCK, NULL,
-         "meta \n"
-        "    endianness BIG \n"
         "def 0x01 emptyfn \n"
         "def 0x02 emptyfn2 \n"
         "meta \n"
         "    namewidth 3 \n"
         )); 
 
+    mu_check(test_language(
+        MISPLACED_METADATA_BLOCK, NULL,
+        "meta \n"
+        "    endianness big \n"
+        "def 0x01 emptyfn \n"
+        "def 0x02 emptyfn2 \n"
+        "meta \n"
+        "    namewidth 3 \n"
+        )); 
+
+    lang_free(lang);
 }
+

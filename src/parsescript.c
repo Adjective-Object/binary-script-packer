@@ -295,6 +295,7 @@ const struct metadata_entry metadata_entries[] = {
     {"namewidth",  1, *__parse_meta_namewidth},
     {"nameshift",  2, *__parse_meta_nameshift}
 };
+
 #define NUM_META_ATTR sizeof(metadata_entries) \
     / sizeof(struct metadata_entry)
 
