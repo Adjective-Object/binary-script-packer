@@ -85,3 +85,25 @@ void free_sequence(void *head, size_t count) {
         free(realhead[i]);
     }
 }
+
+void xor_buffer(void *a, void *b, size_t s){
+    char *x = (char *) a, *y = (char *) b;
+    for(size_t i=0; i<s; i++) {
+        x[i] = x[i] ^ y[i];
+    }
+}
+
+void or_buffer(void *a, void *b, size_t s){
+    char *x = (char *) a, *y = (char *) b;
+    for(size_t i=0; i<s; i++) {
+        x[i] = x[i] | y[i];
+    }
+}
+
+void and_buffer(void *a, void *b, size_t s){
+    char *x = (char *) a, *y = (char *) b;
+    for(size_t i=0; i<s; i++) {
+        x[i] = x[i] & y[i];
+    }
+}
+

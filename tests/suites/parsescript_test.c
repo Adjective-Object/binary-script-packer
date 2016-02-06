@@ -402,14 +402,12 @@ void mu_test_parse_language_metadata() {
         "    endianness aaaaahhhhh \n"
         ));
 
-    /*
     mu_check(test_language(
         DUPLICATE_METADATA_ATTRIBUTE, NULL,
         "meta \n"
         "    endianness BIG \n"
         "    endianness LITTLE \n"
         ));
-    */
 
     mu_check(test_language(
         UNKNOWN_METADATA_ATTRIBUTE, NULL,

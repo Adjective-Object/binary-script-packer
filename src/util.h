@@ -77,4 +77,11 @@ void print_binary(void *bin, size_t bits);
  **/
 void free_sequence(void * head, size_t count);
 
+/**
+ * xors two buffers and stores the result in a
+ **/
+void xor_buffer(void *a, void *b, size_t s);
+void or_buffer(void *a, void *b, size_t s);
+void and_buffer(void *a, void *b, size_t s);
+
 #endif

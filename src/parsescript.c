@@ -248,55 +248,94 @@ PARSE_ERROR parse_fn(function_def *f, language_def *l, swexp_list_node *node) {
     return NO_ERROR;
 }
 
-PARSE_ERROR parse_metadata_attr(language_def *l, swexp_list_node *node) {
-    char *name = list_head(node)->content;
-    char *value = list_head(node)->next->content;
-    if (strcmp(name, "endian") == 0 || strcmp(name, "endianness") == 0) {
-
-        if (strcmp(value, "big") == 0 || strcmp(value, "Big") == 0 ||
-            strcmp(value, "BIG") == 0) {
-            l->target_endianness = BIG_ENDIAN;
-        } else if (strcmp(value, "little") == 0 ||
-                   strcmp(value, "Little") == 0 ||
-                   strcmp(value, "LITTLE") == 0) {
-            l->target_endianness = LITTLE_ENDIAN;
-        } else {
-            // printf("Unrecognized value '%s' for endianness declaration\n", value);
-            // printf("only values big/Big/BIG/little/Little/LITTLE are valid\n");
-            return MALFORMED_METADATA_ATTRIBUTE;
-        }
-
-    } else if (strcmp(name, "namewidth") == 0 ||
-               strcmp(name, "functionwidth") == 0 ||
-               strcmp(name, "funcwidth") == 0) {
-        PARSE_ERROR e = parse_uint(&l->function_name_width, value);
-        // printf("namewidth error %d\n", e);
-        if (e != NO_ERROR) return MALFORMED_METADATA_ATTRIBUTE;
-
-    } else if (strcmp(name, "nameshift") == 0) {
-        PARSE_ERROR e = parse_uint(&(l->function_name_bitshift), value);
-        // printf("nameshift error %d\n", e);
-        if (e != NO_ERROR) return MALFORMED_METADATA_ATTRIBUTE;
-
+/// METADATA PARSING ///
+PARSE_ERROR __parse_meta_endian(language_def *l, swexp_list_node *node) {
+    char *value = (char *) list_head(node)->next->content;
+    if (strcmp(value, "big") == 0 || strcmp(value, "Big") == 0 ||
+        strcmp(value, "BIG") == 0) {
+        l->target_endianness = BIG_ENDIAN;
+    } else if (strcmp(value, "little") == 0 ||
+               strcmp(value, "Little") == 0 ||
+               strcmp(value, "LITTLE") == 0) {
+        l->target_endianness = LITTLE_ENDIAN;
     } else {
-        //printf("unrecgonized metadata attr '%s'\n", name);
-        return UNKNOWN_METADATA_ATTRIBUTE;
+        // printf("Unrecognized value '%s' for endianness declaration\n", value);
+        // printf("only values big/Big/BIG/little/Little/LITTLE are valid\n");
+        return MALFORMED_METADATA_ATTRIBUTE;
     }
-
     return NO_ERROR;
 }
 
+PARSE_ERROR __parse_meta_namewidth(language_def *l, swexp_list_node *node) {
+    char *value = (char *) list_head(node)->next->content;
+    PARSE_ERROR e = parse_uint(&(l->function_name_width), value);
+    // printf("nameshift error %d\n", e);
+    if (e != NO_ERROR) return MALFORMED_METADATA_ATTRIBUTE;
+    return NO_ERROR;
+}
+
+PARSE_ERROR __parse_meta_nameshift(language_def *l, swexp_list_node *node) {
+    char *value = (char *) list_head(node)->next->content;
+    PARSE_ERROR e = parse_uint(&l->function_name_bitshift, value);
+    // printf("namewidth error %d\n", e);
+    if (e != NO_ERROR) return MALFORMED_METADATA_ATTRIBUTE;
+    return NO_ERROR;
+}
+
+
+struct metadata_entry {
+    char * name;
+    size_t id;
+    PARSE_ERROR (*parser)(language_def *l, swexp_list_node *node);
+};
+
+const struct metadata_entry metadata_entries[] = {
+    {"endian",     0, *__parse_meta_endian},
+    {"endianness", 0, *__parse_meta_endian},
+    {"namewidth",  1, *__parse_meta_namewidth},
+    {"nameshift",  2, *__parse_meta_nameshift}
+};
+#define NUM_META_ATTR sizeof(metadata_entries) \
+    / sizeof(struct metadata_entry)
+
 PARSE_ERROR parse_metadata(language_def *l, swexp_list_node *metadata_decl) {
     swexp_list_node *node;
-    for (node = list_head(metadata_decl)->next; node != NULL;
+    long long encountered_bitmask = 0;
+
+    for (node = list_head(metadata_decl)->next; 
+         node != NULL;
          node = node->next) {
         if (node->type != LIST) {
             // printf("encountered non-list '%s' in metadata declaration\n",
             //        (char *)node->content);
             return MALFORMED_METADATA_ATTRIBUTE;
         }
-        PARSE_ERROR p = parse_metadata_attr(l, node);
-        if (p != NO_ERROR) return p;
+
+        //get the name of the current node
+        char * name = (char *) list_head(node)->content;
+       
+        bool matched = false; 
+        for (int i=0; i<NUM_META_ATTR; i++) {
+            if (0 == strcmp(name, metadata_entries[i].name)) {
+
+                if (0 == (encountered_bitmask >> metadata_entries[i].id)) {
+                    encountered_bitmask = 
+                        encountered_bitmask | (1 << metadata_entries[i].id);
+                } else {
+                    return DUPLICATE_METADATA_ATTRIBUTE;
+                }
+
+                PARSE_ERROR p;
+                p = metadata_entries[i].parser(l, node);
+                if (p != NO_ERROR) return p;
+
+                matched = true;
+                break;
+            }
+        }
+
+        if (!matched) return UNKNOWN_METADATA_ATTRIBUTE;
+
     }
     return NO_ERROR;
 }
