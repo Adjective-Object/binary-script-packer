@@ -437,6 +437,6 @@ void mu_test_parse_language_metadata() {
         "    namewidth 3 \n"
         )); 
 
-    lang_free(lang);
+    free_lang(&lang);
 }
 
