@@ -401,6 +401,7 @@ void mu_test_parse_language_metadata() {
         "meta \n"
         "    endianness aaaaahhhhh \n"
         ));
+
     /*
     mu_check(test_language(
         DUPLICATE_METADATA_ATTRIBUTE, NULL,

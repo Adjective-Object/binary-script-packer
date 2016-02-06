@@ -28,7 +28,7 @@ all: $(program) $(test)
 	gcc $(CFLAGS) -c $^ -o $@
 
 $(program): $(program_obj) $(lib_obj)
-	gcc $(LDFLAGS) $^ -o $@
+	gcc $^ -o $@ $(LDFLAGS) 
 
 #########
 # TESTS #
@@ -41,7 +41,7 @@ test: $(test)
 
 # build the test executable
 $(test): $(mutest_obj) $(test_obj) $(lib_obj) tests/suite_runner.o
-	gcc $(LDFLAGS) $^ -o $@
+	gcc $^ -o $@ $(LDFLAGS) 
 
 # build the suite_runner thing
 tests/suite_runner.c: $(test_obj)
