@@ -11,6 +11,9 @@ in with pkgs; let
         llvmPackages.clang-unwrapped # for clang-format
         cppcheck
         valgrind
+
+        # etc
+        hexcurse
     ];
     
     dependencies = [

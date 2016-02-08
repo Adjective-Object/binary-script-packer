@@ -70,6 +70,8 @@ char *type_name(arg_type t) {
         return "str";
     case INT:
         return "int";
+    case UNSIGNED_INT:
+        return "uint";
     case FLOAT:
         return "float";
     case SKIP:
@@ -97,37 +99,47 @@ void print_fn(language_def *l, function_def *f) {
     printf("\n");
 }
 
-void print_fn_call(function_call *call) {
-    printf("%s(", call->defn->name);
+void print_fn_call(function_call * call) {
+    char out[1024];
+    stringify_fn_call(out,call);
+    printf("%s\n", out);
+}
+
+void stringify_fn_call(
+        char * out,
+        function_call * call) {
+
+    out += sprintf("%s(", call->defn->name);
     for (unsigned int i = 0; i < call->defn->argc; i++) {
         argument_def **argdefs = call->defn->arguments;
         switch (argdefs[i]->type) {
         case RAW_STRING:
-            printf("%*s", argdefs[i]->bitwidth / 8, (char *)call->args[i]);
+            out += sprintf(out, "%*s", argdefs[i]->bitwidth / 8, (char *)call->args[i]);
             break;
         case STRING:
-            printf("%s", (char *)call->args[i]);
+            out += sprintf(out, "%s", (char *)call->args[i]);
             break;
         case INT:
         case UNSIGNED_INT:
-            printf("%ld", *((long int *)call->args[i]));
+            out += sprintf(out, "%ld", *((long int *)call->args[i]));
             break;
         case FLOAT:
-            printf("%Lf", *((long double *)call->args[i]));
+            out += sprintf(out, "%Lf", *((long double *)call->args[i]));
             break;
         case SKIP:
             break;
         default:
-            printf("unhandled argument type when printing (%s)\n",
+            out += sprintf(out,
+                    "unhandled argument type when printing (%s)\n",
                    typenames[argdefs[i]->type]);
             exit(1);
             break;
         }
         if (argdefs[i]->type != SKIP && i + 1 < call->defn->argc) {
-            printf(", ");
+            out += sprintf(out, ", ");
         }
     }
-    printf(")\n");
+    out += sprintf(out, ")");
 }
 
 void *arg_init(language_def *l, argument_def *argdef, bitbuffer *buffer) {
@@ -287,6 +299,8 @@ void lang_init(language_def *lang) {
 function_def *lang_getfn(language_def *l, unsigned int binary_value) {
     unsigned int i;
     for (i = 0; i < l->function_ct; i++) {
+        printf("%d 0x%x ", i, l->functions[i]->function_binary_value);
+        printf("%s \n", l->functions[i]->name);
         if (l->functions[i]->function_binary_value == binary_value) {
             return l->functions[i];
         }
