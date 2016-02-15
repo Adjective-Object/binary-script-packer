@@ -238,7 +238,6 @@ PARSE_ERROR parse_fn(function_def *f, language_def *l, swexp_list_node *node) {
     }
 
     f->function_binary_value = cont >> l->function_name_bitshift;
-    printf("parsed bn value = 0x%x '%s'\n", cont, f->name);
     if (argc == 0) {
         free(arguments);
         arguments = NULL;
@@ -366,6 +365,8 @@ PARSE_ERROR parse_language(language_def *language, swexp_list_node *head) {
                 // parse a function definition
                 function_def *f = malloc(sizeof(function_def));
                 parse_fn(f, language, current);
+                //printf("%u ", language->function_ct );
+                print_fn(language, f);
                 add_fn_to_lang(language, f);
             }
             else if (strcmp(content, "meta") == 0) {

@@ -113,9 +113,20 @@ void mu_test_parse_argtype() {
 
 bool compare_function_defs(function_def * a, function_def * b) {
     // check the root level props of either function
-    if (a->argc != b->argc ||
-        0 != strcmp(a->name, b->name) ||
-        a->function_binary_value != b->function_binary_value) {
+    if (a->argc != b->argc) {
+        printf("argc a=%d b=%d ", a->argc, b->argc);
+        return false;
+    }
+    
+    if (0 != strcmp(a->name, b->name)) {
+        printf("names a=%s b=%s ", a->name, b->name);
+        return false;
+    }
+
+    if(a->function_binary_value != b->function_binary_value) {
+        printf("binary vals a=%x b=%x ",
+                a->function_binary_value,
+                b->function_binary_value);
         return false;
     }
 
@@ -254,8 +265,11 @@ bool test_language(
     language_def parsed_lang;
     memset(&parsed_lang, 0, sizeof(language_def));
 
-    PARSE_ERROR parse_error = 
-        parse_language_from_str(&parsed_lang, str);
+    // parse to nodes, convert nodes to language, then free nodes
+    swexp_list_node *nodes = parse_string_to_atoms(str, 255);
+    //print_list(nodes);
+    PARSE_ERROR parse_error = parse_language(&parsed_lang, nodes);
+    free_list(nodes);
 
     if (parse_error != expected_error) {
         printf("mismatch in error expected = %u, parsed = %u\n",
@@ -289,19 +303,19 @@ bool test_language(
             != parsed_lang.function_ct) {
         printf("    different metadata\n");
         
-        printf("    endianness %d %d \n",
+        printf("      endianness %d %d \n",
             reference_lang->target_endianness,
             parsed_lang.target_endianness);
 
-        printf("    name width %u %u \n",
+        printf("      name width %u %u \n",
             reference_lang->function_name_width,
             parsed_lang.function_name_width);
 
-        printf("    name bitwidth %u %u \n",
+        printf("      name bitwidth %u %u \n",
             reference_lang->function_name_bitshift,
             parsed_lang.function_name_bitshift);
   
-        printf("    function count %u %u \n",
+        printf("      function count %u %u \n",
             reference_lang->function_ct,
             parsed_lang.function_ct);
         free_lang(&parsed_lang);
@@ -439,4 +453,84 @@ void mu_test_parse_language_metadata() {
 
     free_lang(&lang);
 }
+
+void mu_test_parse_language_from_str() {
+    language_def lang;
+    lang_init(&lang);
+
+    lang.function_name_width = 6;
+    lang.function_name_bitshift = 2;
+
+    // arguments and function declaration for graphic
+    argument_def
+        graphic_1 = {SKIP, 6, NULL},
+        graphic_2 = {INT,  4, "gfx"},
+        graphic_3 = {SKIP, 4, NULL},
+        graphic_4 = {INT,  4, "zoff"},
+        graphic_5 = {INT,  4, "yoff"},
+        graphic_6 = {INT,  4, "xoff"},
+        graphic_7 = {INT,  4, "zrange"},
+        graphic_8 = {INT,  4, "xrange"},
+        graphic_9 = {INT,  4, "yrange"};
+    argument_def * graphic_args[] = {
+        &graphic_1,
+        &graphic_2,
+        &graphic_3,
+        &graphic_4,
+        &graphic_5,
+        &graphic_6,
+        &graphic_7,
+        &graphic_8,
+        &graphic_9
+    };
+    function_def graphic_fn = {
+        .function_binary_value = (0x10 >> 2),
+        .name = "graphic",
+        .argc = 9,
+        .arguments = graphic_args,
+    };
+    add_fn_to_lang(&lang, &graphic_fn);
+
+    // arguments and function def for test
+    argument_def
+        test_1 = {SKIP, 6, NULL},
+        test_2 = {UNSIGNED_INT,  32, "intarg"},
+        test_3 = {FLOAT,  32, "floatarg"};
+    argument_def * test_args[] = {
+        &test_1,
+        &test_2,
+        &test_3,
+    };
+    function_def test_fn = {
+        .function_binary_value = (0x08 >> 2),
+        .name = "test",
+        .argc = 3,
+        .arguments = test_args,
+    };
+    add_fn_to_lang(&lang, &test_fn);
+
+    mu_check(test_language(NO_ERROR, &lang,
+        "meta\n"
+        "    namewidth 6\n"
+        "    nameshift 2\n"
+        "\n"
+        "\n"
+        "def 0x10 graphic {\n"
+        "    skip6 int4(gfx) skip4\n"
+        "    int4(zoff) int4(yoff) int4(xoff)\n"
+        "    int(zrange) int4(yrange) int4(xrange)\n"
+        "}\n"
+        "\n"
+        "def 0x08 test {\n"
+        "    skip2\n"
+        "    uint32(intarg)\n"
+        "    float32(floatarg)\n"
+        "}\n"
+        "\n"));
+
+    _free_lang(&lang, false);
+}
+
+
+
 

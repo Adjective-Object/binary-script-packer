@@ -109,7 +109,7 @@ void stringify_fn_call(
         char * out,
         function_call * call) {
 
-    out += sprintf("%s(", call->defn->name);
+    out += sprintf(out, "%s(", call->defn->name);
     for (unsigned int i = 0; i < call->defn->argc; i++) {
         argument_def **argdefs = call->defn->arguments;
         switch (argdefs[i]->type) {
@@ -299,8 +299,8 @@ void lang_init(language_def *lang) {
 function_def *lang_getfn(language_def *l, unsigned int binary_value) {
     unsigned int i;
     for (i = 0; i < l->function_ct; i++) {
-        printf("%d 0x%x ", i, l->functions[i]->function_binary_value);
-        printf("%s \n", l->functions[i]->name);
+        // printf("%d 0x%x ", i, l->functions[i]->function_binary_value);
+        // printf("%s \n", l->functions[i]->name);
         if (l->functions[i]->function_binary_value == binary_value) {
             return l->functions[i];
         }
@@ -308,13 +308,21 @@ function_def *lang_getfn(language_def *l, unsigned int binary_value) {
     return NULL;
 }
 
-void free_lang(language_def *l) {
-    for (size_t i = 0; i < l->function_ct; i++) {
-        free_fn(l->functions[i]);
-        free(l->functions[i]);
+void _free_lang(language_def *l, bool controlled) {
+    if (controlled) {
+        for (size_t i = 0; i < l->function_ct; i++) {
+            free_fn(l->functions[i]);
+            free(l->functions[i]);
+        }
     }
     free(l->functions);
 }
+
+void free_lang(language_def *l) {
+    _free_lang(l, true);
+}
+
+
 
 void free_call(function_call *call) {
     for (size_t i = 0; i < call->defn->argc; i++) {

@@ -6,6 +6,7 @@ in with pkgs; let
         # build
         gcc
         gnumake
+        cmake
 
         # check
         llvmPackages.clang-unwrapped # for clang-format
@@ -14,6 +15,7 @@ in with pkgs; let
 
         # etc
         hexcurse
+        ctags
     ];
     
     dependencies = [
