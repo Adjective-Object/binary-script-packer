@@ -140,6 +140,8 @@ PARSE_ERROR parse_fn(function_def *f, language_def *l, swexp_list_node *node) {
     swexp_list_node *head = list_head(node);
     PARSE_ERROR err;
 
+    // print_list(node);
+
     // check the first element is 'def'
     if (strcmp(head->content, "def") != 0) {
         // printf("parse_fn called on non-function object\n");
@@ -209,9 +211,11 @@ PARSE_ERROR parse_fn(function_def *f, language_def *l, swexp_list_node *node) {
         arguments[argc] = argument;
         argc++;
 
+        printf("%d ARGUMENT\n", argc);
+
         if (head->type == ATOM) {
             // handle the case of a type without a name
-            if ((err = parse_argtype(argument, (char *)head->content))) {
+            if (NO_ERROR != (err = parse_argtype(argument, (char *)head->content))) {
                 free_sequence(arguments, argc - 1);
                 free(arguments);
                 return err;
@@ -226,7 +230,7 @@ PARSE_ERROR parse_fn(function_def *f, language_def *l, swexp_list_node *node) {
             }
 
             swexp_list_node *lnode = list_head(head);
-            if ((err = parse_argtype(argument, (char *)lnode->content))) {
+            if (NO_ERROR != (err = parse_argtype(argument, (char *)lnode->content))) {
                 free_sequence(arguments, argc - 1);
                 free(arguments);
                 return err;
@@ -234,8 +238,12 @@ PARSE_ERROR parse_fn(function_def *f, language_def *l, swexp_list_node *node) {
             char *arg_name = (char *)lnode->next->content;
             argument->name = malloc((strlen(arg_name) + 1) * sizeof(char));
             strcpy(argument->name, arg_name);
+
+            printf("    %s\n", arg_name);
         }
     }
+
+    printf("argc: %d\n", argc);
 
     f->function_binary_value = cont >> l->function_name_bitshift;
     if (argc == 0) {

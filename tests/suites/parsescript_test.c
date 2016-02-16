@@ -454,6 +454,27 @@ void mu_test_parse_language_metadata() {
     free_lang(&lang);
 }
 
+void mu_test_parse_malformed() {
+    mu_check(test_language(MALFORMED_ARGUMENT_DECLARATION, NULL,
+        "meta\n"
+        "    namewidth 6\n"
+        "    nameshift 2\n"
+        "\n"
+        "\n"
+        "def 0x10 graphic {\n"
+        "    skip6 int4(gfx) skip4\n"
+        "    int4(zoff) int4(yoff) int4(xoff)\n"
+        "    int4(zrange) int4(yrange) int4(xrange)\n"
+        "}\n"
+        "\n"
+        "def 0x08 test {\n"
+        "    skip2\n"
+        "    uint32(intarg)\n"
+        "    float32(floatarg)\n"
+        "}\n"
+        "\n"));
+}
+
 void mu_test_parse_language_from_str() {
     language_def lang;
     lang_init(&lang);
@@ -518,7 +539,7 @@ void mu_test_parse_language_from_str() {
         "def 0x10 graphic {\n"
         "    skip6 int4(gfx) skip4\n"
         "    int4(zoff) int4(yoff) int4(xoff)\n"
-        "    int(zrange) int4(yrange) int4(xrange)\n"
+        "    int4(zrange) int4(yrange) int4(xrange)\n"
         "}\n"
         "\n"
         "def 0x08 test {\n"
