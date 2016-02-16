@@ -6,6 +6,7 @@
 
 #include "langdef.h"
 #include "bitbuffer.h"
+#include "sweetexpressions.h"
 
 typedef enum binscript_parser_direction {
     SCRIPT2BIN,
@@ -32,6 +33,7 @@ typedef struct binscript_consumer {
 
     binscript_source parser_source; // the type of the inputdd
     void * source; // NULL if parser_source = FROM_MEMORY
+    swexp_list_node * nodes;
 
     bitbuffer internal_buf;
     size_t internal_buf_len;
@@ -55,10 +57,17 @@ void consumer_set_size(
 
 
 function_call * binscript_next(binscript_consumer * consumer);
+function_call *binscript_next_fromscript(binscript_consumer *consumer);
+function_call *binscript_next_frombin(binscript_consumer *consumer);
 
 function_call * decode_function_call(
         language_def * l, char * databuffer, size_t databuffer_len);
 unsigned int funcname_from_buffer(language_def * def, char * buffer);
+
+size_t binary_encode_function_call(
+        char * databuffer, language_def *l, function_call * f);
+
+size_t string_encode_function_call(char * out, function_call * call);
 
 void binscript_free(binscript_consumer * c);
 

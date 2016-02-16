@@ -35,6 +35,12 @@ typedef enum PARSE_ERROR {
     UNKNOWN_METADATA_ATTRIBUTE = 17,
     MALFORMED_METADATA_ATTRIBUTE = 18,
     DUPLICATE_METADATA_ATTRIBUTE = 19,
+
+    // function call parsing errors
+    UNKNOWN_FUNCTION_NAME = 20,
+    ARG_VALUE_PARSE_ERROR = 21,
+    MISSING_ARG = 22,
+    LEFTOVER_ARG = 23,
 } PARSE_ERROR;
 
 typedef struct detailed_parse_error {
@@ -101,7 +107,8 @@ void add_fn_to_lang(language_def *language, function_def * def);
  * call: flat swexp list of the function call w/ arguments
  * l: definition of language defining call made in `call`
  **/
-function_call * parse_fn_call(swexp_list_node * call, language_def * l);
+PARSE_ERROR parse_fn_call(function_call * call, language_def * l, swexp_list_node * nodes);
+PARSE_ERROR parse_arg(void ** result, argument_def *arg, char * str_repr);
 
 /**
  * Parses a language definition out of a file into a language_def

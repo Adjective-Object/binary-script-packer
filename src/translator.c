@@ -7,6 +7,8 @@
 #include "translator.h"
 #include "util.h"
 #include "bitbuffer.h"
+#include "sweetexpressions.h"
+#include "parsescript.h"
 
 /**
  * Initialize everything about a consumer except for the source
@@ -19,9 +21,12 @@ binscript_undef_consumer(language_def *lang,
     c->lang = lang;
     c->endmode = NULL_TERMINATED;
     c->direction = direction;
-
-    c->internal_buf_len = 1;
-    bitbuffer_init(&(c->internal_buf), c->internal_buf_len);
+    c->nodes = NULL;
+    
+    if (direction == BIN2SCRIPT) {
+        c->internal_buf_len = 1;
+        bitbuffer_init(&(c->internal_buf), c->internal_buf_len);
+    }
 
     return c;
 }
@@ -39,6 +44,13 @@ binscript_file_consumer(language_def *lang, FILE *f,
     c->parser_source = FROM_FILE;
     c->source = (void *)f;
 
+    if (direction == SCRIPT2BIN) {
+        c->nodes = parse_file_to_atoms(f, 255);
+        swexp_list_node * realhead = list_head(c->nodes);
+        free_node_nonrecursive(c->nodes);
+        c->nodes = realhead;
+    }
+
     return c;
 }
 
@@ -50,6 +62,13 @@ binscript_mem_consumer(language_def *lang, void *mem,
 
     c->parser_source = FROM_MEMORY;
     c->source = mem;
+
+    if (direction == SCRIPT2BIN) {
+        c->nodes = parse_string_to_atoms(mem, 255);
+        swexp_list_node * realhead = list_head(c->nodes);
+        free_node_nonrecursive(c->nodes);
+        c->nodes = realhead;
+    }
 
     return c;
 }
@@ -121,22 +140,40 @@ unsigned int binscript_peek_fn(binscript_consumer *consumer) {
     return fn_name;
 }
 
-#define MAX_FN_BUFFER_SIZE 255
 function_call *binscript_next(binscript_consumer *consumer) {
-    /*
-       while(true) {
-       char c = 0;
-       binscript_pop_head(consumer, c, 1);
-       printf("%d\n", (unsigned char) c);
-       }
-       */
+    if (consumer->direction == BIN2SCRIPT) {
+        return binscript_next_frombin(consumer);
+    } else {
+        return binscript_next_fromscript(consumer);
+    }
+}
 
+function_call *binscript_next_fromscript(binscript_consumer * consumer) {
+    // pop first node off list
+    swexp_list_node * node = consumer->nodes;
+    if (node == NULL) return NULL;
+
+    consumer->nodes = node->next;
+    function_call * call = malloc(sizeof(function_call));
+
+    PARSE_ERROR err;
+    if (NO_ERROR != (err = parse_fn_call(call, consumer->lang, node))) {
+        printf("error %d in parse_fn_call\n", err);
+        free(call);
+        return NULL;
+    }
+
+    free_node(node);
+    return call;
+}
+
+#define MAX_FN_BUFFER_SIZE 255
+function_call *binscript_next_frombin(binscript_consumer *consumer) {
     // The id of the function being called
     unsigned int function_id = binscript_peek_fn(consumer);
 
-    if (function_id == 0) {
+    if (function_id == 0)
         return NULL;
-    }
 
     // get the body of the function based on the width
     function_def *funcdef = lang_getfn(consumer->lang, function_id);
@@ -237,6 +274,64 @@ unsigned int funcname_from_buffer(language_def *lang, char *fname_buffer) {
 void binscript_free(binscript_consumer *c) {
     // don't invoke the free helper since the bitbuffer is
     // a field of the consumer
-    bitbuffer_free(&(c->internal_buf));
+    if(c->direction == BIN2SCRIPT) {
+        bitbuffer_free(&(c->internal_buf));
+    } else if (c->direction == SCRIPT2BIN) {
+        free_list(c->nodes);
+    }
     free(c);
 }
+
+
+size_t string_encode_function_call(
+        char * out,
+        function_call * call) {
+    char * origin = out;
+
+    out += sprintf(out, "%s(", call->defn->name);
+    for (unsigned int i = 0; i < call->defn->argc; i++) {
+        argument_def **argdefs = call->defn->arguments;
+        switch (argdefs[i]->type) {
+        case RAW_STRING:
+            out += sprintf(out, "%*s", argdefs[i]->bitwidth / 8, (char *)call->args[i]);
+            break;
+        case STRING:
+            out += sprintf(out, "%s", (char *)call->args[i]);
+            break;
+        case INT:
+        case UNSIGNED_INT:
+            out += sprintf(out, "%Ld", *((long long *)(call->args[i])));
+            break;
+        case FLOAT:
+            out += sprintf(out, "%Lf", *((long double *)call->args[i]));
+            break;
+        case SKIP:
+            break;
+        default:
+            printf( "unhandled argument type in string_encode_function_call (%s)\n",
+                   typenames[argdefs[i]->type]);
+            exit(1);
+            break;
+        }
+        if (argdefs[i]->type != SKIP && i + 1 < call->defn->argc) {
+            out += sprintf(out, " ");
+        }
+    }
+    out += sprintf(out, ")");
+    return out - origin;
+}
+
+size_t binary_encode_function_call(char * out, language_def * lang, function_call * call) {
+    // initialize a bitbuffer of the width of the function
+    bitbuffer b;
+    size_t fn_width = func_call_width(lang, call->defn);
+    bitbuffer_init_from_buffer(&b, out, fn_width);
+
+    encode_function_call(&b, lang, call);
+
+    return b.buffer - out;
+}
+
+
+
+

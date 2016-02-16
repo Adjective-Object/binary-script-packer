@@ -105,3 +105,10 @@ void bitbuffer_writeblock(bitbuffer *b, void *block, size_t bits) {
         }
     }
 }
+
+void bitbuffer_write_int(bitbuffer *b, unsigned int val, size_t bits) {
+    for (int i=bits-1; i>=0; i--) {
+        bitbuffer_writebit(b, (val >> i) & 1);
+    }
+}
+

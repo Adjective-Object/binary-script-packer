@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "../mutest.h"
 #include "parsescript.h"
@@ -101,13 +102,18 @@ void mu_test_parse_argtype() {
     argument_def backup_argument;
     memcpy(&backup_argument, &argument, sizeof(argument_def));
 
-    mu_check(DISALLOWED_SIZE == parse_argtype(&argument, "float11"));
+    mu_eq(PARSE_ERROR, DISALLOWED_SIZE, parse_argtype(&argument, "float11"));
     mu_check_unchanged();
-    mu_check(DISALLOWED_SIZE == parse_argtype(&argument, "float30"));
+    mu_eq(PARSE_ERROR, DISALLOWED_SIZE, parse_argtype(&argument, "float30"));
     mu_check_unchanged();
-    mu_check(DISALLOWED_SIZE == parse_argtype(&argument, "str3"));
+    mu_eq(PARSE_ERROR, DISALLOWED_SIZE, parse_argtype(&argument, "str3"));
     mu_check_unchanged();
-    mu_check(DISALLOWED_SIZE == parse_argtype(&argument, "raw_str3"));
+    mu_eq(PARSE_ERROR, DISALLOWED_SIZE, parse_argtype(&argument, "raw_str3"));
+    mu_check_unchanged();
+
+
+    // Check for unspecified size
+    mu_eq(PARSE_ERROR, UNSPECIFIED_SIZE, parse_argtype(&argument, "int"));
     mu_check_unchanged();
 }
 
@@ -328,13 +334,14 @@ bool test_language(
                     reference_lang->functions[i],
                     parsed_lang.functions[i])) {
             printf("different function in slot %d\n", i);
+            print_fn(reference_lang, reference_lang->functions[i]);
+            print_fn(&parsed_lang, parsed_lang.functions[i]);
             free_lang(&parsed_lang);
             return false;
         }
     }
 
     free_lang(&parsed_lang);
-
     return true;
 }
 
@@ -455,24 +462,12 @@ void mu_test_parse_language_metadata() {
 }
 
 void mu_test_parse_malformed() {
-    mu_check(test_language(MALFORMED_ARGUMENT_DECLARATION, NULL,
-        "meta\n"
-        "    namewidth 6\n"
-        "    nameshift 2\n"
-        "\n"
-        "\n"
-        "def 0x10 graphic {\n"
-        "    skip6 int4(gfx) skip4\n"
-        "    int4(zoff) int4(yoff) int4(xoff)\n"
-        "    int4(zrange) int4(yrange) int4(xrange)\n"
-        "}\n"
-        "\n"
+    argument_def a;
+    mu_eq(PARSE_ERROR, UNSPECIFIED_SIZE, parse_argtype(&a, "int"));
+    mu_check(test_language(UNSPECIFIED_SIZE, NULL,
         "def 0x08 test {\n"
-        "    skip2\n"
-        "    uint32(intarg)\n"
-        "    float32(floatarg)\n"
-        "}\n"
-        "\n"));
+        "    uint(intarg)\n"
+        "}\n"));
 }
 
 void mu_test_parse_language_from_str() {
@@ -491,8 +486,8 @@ void mu_test_parse_language_from_str() {
         graphic_5 = {INT,  4, "yoff"},
         graphic_6 = {INT,  4, "xoff"},
         graphic_7 = {INT,  4, "zrange"},
-        graphic_8 = {INT,  4, "xrange"},
-        graphic_9 = {INT,  4, "yrange"};
+        graphic_8 = {INT,  4, "yrange"},
+        graphic_9 = {INT,  4, "xrange"};
     argument_def * graphic_args[] = {
         &graphic_1,
         &graphic_2,
@@ -543,7 +538,7 @@ void mu_test_parse_language_from_str() {
         "}\n"
         "\n"
         "def 0x08 test {\n"
-        "    skip2\n"
+        "    skip6\n"
         "    uint32(intarg)\n"
         "    float32(floatarg)\n"
         "}\n"

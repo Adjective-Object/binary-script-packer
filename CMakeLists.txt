@@ -10,7 +10,7 @@ include_directories(AFTER ./src)
 include_directories(AFTER ./libsweetparse/src)
 link_directories(AFTER ./libsweetparse)
 
-set(CMAKE_C_FLAGS "-g -fPIC -Wall -D_POSIX_SOURCE -std=c99")
+set(CMAKE_C_FLAGS "-g -fPIC -Wall -D_POSIX_SOURCE -std=c11")
 
 # project source library
 add_library(ScripterLib OBJECT
@@ -22,24 +22,28 @@ add_library(ScripterLib OBJECT
 
 
 # add the tests library
-add_library(ScripterTestSuites OBJECT
+set(TESTSUITE_SRCS 
     tests/suites/bitbuffer_test.c
     tests/suites/util_test.c
     tests/suites/parsescript_test.c
     tests/suites/translate_test.c)
+add_library(ScripterTestSuites OBJECT ${TESTSUITE_SRCS})
 
 
 
-# automatically generate the suite runners
-# and also do other stuff
+# automatically generate the suite runner main function
+# add TESTSUITE_SRCS to to the dependencies instead of
+# to force a rebuild because of a known bug where
+# using OBJECT libraries as a dependency does not work
 add_custom_command(
     OUTPUT tests/suite_runner.c
     # this is a hack because cmake sucks
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/mkmutest mutest.h
-    ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/ScripterTestSuites.dir/tests/suites/*.o
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/mkmutest 
+    ARGS mutest.h
+        ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/ScripterTestSuites.dir/tests/suites/*.o
         > suite_runner.c
     WORKING_DIRECTORY tests
-    DEPENDS ScripterTestSuites)
+    DEPENDS ScripterTestSuites ${TESTSUITE_SRCS})
 
 
 
@@ -61,7 +65,7 @@ target_link_libraries(scripter_tests sweetexpressions m)
 add_custom_target(run_tests 
     COMMAND valgrind --quiet --leak-check=full --trace-children=yes ./scripter_tests -vv
     WORKING_DIRECTORY .
-    DEPENDS scripter)
+    DEPENDS scripter_tests)
 
 add_custom_target(run_tests_unsafe
     COMMAND ./scripter_tests -vv

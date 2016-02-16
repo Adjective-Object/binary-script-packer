@@ -78,6 +78,18 @@ void bitbuffer_writeblock(bitbuffer * buffer,
         void * block, size_t bits);
 
 /**
+ * Writes the rightmost n bits of a single value to the head of 
+ * the bitbuffer, and advances the bitbuffer by the number of bits
+ * specified
+ *
+ * buffer: the bitbuffer to operate on
+ * valuue: the value to be copied to the bitbuffer
+ * bits: the number of bits to be copied to the bitbuffer
+ **/
+void bitbuffer_write_int(bitbuffer * buffer,
+        unsigned int value, size_t bits);
+
+/**
  * Cleans up internal structures allocated during bitbuffer_init
  * or bitbuffer_init_from_buffer. Does not free the actual
  * bitbuffer object.

@@ -6,6 +6,15 @@ tests/suite_runner.c
 # build products
 scripter
 scripter_tests
+tags
+
+# cmake stuff
+CMakeFiles/
+CMakeCache.txt
+Makefile
+compile_commands.json
+cmake_install.cmake
+
 
 # vim workflow stuff
 .ycm_*

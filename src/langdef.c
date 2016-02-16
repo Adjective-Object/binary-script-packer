@@ -7,6 +7,7 @@
 
 #include "parsescript.h"
 #include "langdef.h"
+#include "translator.h"
 #include "util.h"
 #include "bitbuffer.h"
 
@@ -101,45 +102,8 @@ void print_fn(language_def *l, function_def *f) {
 
 void print_fn_call(function_call * call) {
     char out[1024];
-    stringify_fn_call(out,call);
+    string_encode_function_call(out,call);
     printf("%s\n", out);
-}
-
-void stringify_fn_call(
-        char * out,
-        function_call * call) {
-
-    out += sprintf(out, "%s(", call->defn->name);
-    for (unsigned int i = 0; i < call->defn->argc; i++) {
-        argument_def **argdefs = call->defn->arguments;
-        switch (argdefs[i]->type) {
-        case RAW_STRING:
-            out += sprintf(out, "%*s", argdefs[i]->bitwidth / 8, (char *)call->args[i]);
-            break;
-        case STRING:
-            out += sprintf(out, "%s", (char *)call->args[i]);
-            break;
-        case INT:
-        case UNSIGNED_INT:
-            out += sprintf(out, "%ld", *((long int *)call->args[i]));
-            break;
-        case FLOAT:
-            out += sprintf(out, "%Lf", *((long double *)call->args[i]));
-            break;
-        case SKIP:
-            break;
-        default:
-            out += sprintf(out,
-                    "unhandled argument type when printing (%s)\n",
-                   typenames[argdefs[i]->type]);
-            exit(1);
-            break;
-        }
-        if (argdefs[i]->type != SKIP && i + 1 < call->defn->argc) {
-            out += sprintf(out, ", ");
-        }
-    }
-    out += sprintf(out, ")");
 }
 
 void *arg_init(language_def *l, argument_def *argdef, bitbuffer *buffer) {
@@ -245,27 +209,41 @@ void arg_write(bitbuffer *out_buffer, language_def *l, argument_def *argdef,
     switch (argdef->type) {
     case INT:
         bitbuffer_writebit(out_buffer, *argval_longint < 0);
-        for (size_t i = argdef->bitwidth - 2; i >= 0; i++) {
+        for (int i = argdef->bitwidth - 2; i >= 0; i--) {
             bitbuffer_writebit(out_buffer, (*argval_longint >> i) & 1);
         }
         return;
     case UNSIGNED_INT:
-        for (size_t i = argdef->bitwidth; i >= 0; i++) {
+        for (int i = argdef->bitwidth - 1; i >= 0; i--) {
             bitbuffer_writebit(out_buffer, (*argval_longint >> i) & 1);
         }
         return;
     case FLOAT:
+        // printf("out buffer: %d %d -> ", 
+        //         out_buffer->buffer - out_buffer->buffer_origin,
+        //         out_buffer->head_offset);
         switch (argdef->bitwidth) {
         case sizeof(long double) * 8:
-            bitbuffer_writeblock(out_buffer, argval, sizeof(long double));
+            bitbuffer_writeblock(out_buffer, argval, 8 * sizeof(long double));
+            // printf("%ld %d \n", 
+            //         out_buffer->buffer - out_buffer->buffer_origin,
+            //         out_buffer->head_offset);
+            // printf("wrote %Lf\n", *argval_longdouble);
             return;
         case sizeof(double) * 8:
             d = *argval_longdouble;
-            bitbuffer_writeblock(out_buffer, &d, sizeof(double));
+            bitbuffer_writeblock(out_buffer, &d, 8  * sizeof(double));
+            // printf("%ld %d \n", 
+            //         out_buffer->buffer - out_buffer->buffer_origin,
+            //         out_buffer->head_offset);
+            // printf("wrote %lf\n", d);
             return;
         case sizeof(float) * 8:
             f = *argval_longdouble;
-            bitbuffer_writeblock(out_buffer, &f, sizeof(float));
+            bitbuffer_writeblock(out_buffer, &f, 8 * sizeof(float));
+            // printf("%ld %d \n", 
+            //         out_buffer->buffer - out_buffer->buffer_origin,
+            //         out_buffer->head_offset);
             return;
         default:
             printf("tried to switch on unhandled float bitwidth %u",
@@ -305,6 +283,15 @@ function_def *lang_getfn(language_def *l, unsigned int binary_value) {
             return l->functions[i];
         }
     }
+    return NULL;
+}
+
+function_def *lang_getfnbyname(language_def *l, char * name) {
+    unsigned int i;
+    for (i = 0; i < l->function_ct; i++) {
+        if (0 == strcmp(name, l->functions[i]->name)) {
+            return l->functions[i];
+        }    }
     return NULL;
 }
 

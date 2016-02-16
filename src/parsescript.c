@@ -100,9 +100,12 @@ PARSE_ERROR parse_argtype(argument_def *argument, char *name) {
     if (i == __ARG_TYPE_CT)
         return UNKNOWN_ARGTYPE;
 
+    // printf("%s %s %lu %lu\n", name, typenames[i], strlen(name), strlen(typenames[i]));
+
     // if there is no size parameter, return an error
     if (strlen(typenames[i]) == strlen(name))
         return UNSPECIFIED_SIZE;
+
 
     // if an integer was not parsed sucessfully, return an error
     PARSE_ERROR int_error = parse_int(&argwidth, name + strlen(typenames[i]));
@@ -155,7 +158,8 @@ PARSE_ERROR parse_fn(function_def *f, language_def *l, swexp_list_node *node) {
 
     // parse the function binary value
     int cont, shifted_cont, final_cont;
-    if ((err = parse_int(&cont, head->content))) {
+    err = parse_int(&cont, head->content);
+    if (NO_ERROR != err) {
         // printf("malformed binname, err = %d on string '%s'\n",
         //         err, (char *) head->content);
         return MALFORMED_BINNAME;
@@ -205,45 +209,49 @@ PARSE_ERROR parse_fn(function_def *f, language_def *l, swexp_list_node *node) {
             perror("unrecoverable error when reallocing argument array\n");
             exit(1);
         }
+
         argument_def *argument = malloc(sizeof(argument_def));
         argument->name = NULL;
 
         arguments[argc] = argument;
         argc++;
 
-        printf("%d ARGUMENT\n", argc);
+        // printf("%d ARGUMENT\n", argc);
 
         if (head->type == ATOM) {
             // handle the case of a type without a name
-            if (NO_ERROR != (err = parse_argtype(argument, (char *)head->content))) {
-                free_sequence(arguments, argc - 1);
+            err = parse_argtype(argument, (char *)head->content);
+            if (NO_ERROR != err) {
+                free_sequence(arguments, argc);
                 free(arguments);
                 return err;
             }
         } else if (head->type == LIST) {
             // handle the case of a type/name pair
             if (list_len(head) != 2) {
-                printf("tried to parse an argdef w/ !=2 elems\n");
-                free_sequence(arguments, argc - 1);
+                // printf("tried to parse an argdef w/ !=2 elems\n");
+                free_sequence(arguments, argc);
                 free(arguments);
                 return MALFORMED_ARGUMENT_DECLARATION;
             }
 
             swexp_list_node *lnode = list_head(head);
-            if (NO_ERROR != (err = parse_argtype(argument, (char *)lnode->content))) {
-                free_sequence(arguments, argc - 1);
+            err = parse_argtype(argument, (char *)lnode->content);
+            if (NO_ERROR != err) {
+                free_sequence(arguments, argc);
                 free(arguments);
+                free(f->name);
                 return err;
             }
             char *arg_name = (char *)lnode->next->content;
             argument->name = malloc((strlen(arg_name) + 1) * sizeof(char));
             strcpy(argument->name, arg_name);
 
-            printf("    %s\n", arg_name);
+            // printf("    %s\n", arg_name);
         }
     }
 
-    printf("argc: %d\n", argc);
+    // printf("argc: %d\n", argc);
 
     f->function_binary_value = cont >> l->function_name_bitshift;
     if (argc == 0) {
@@ -255,6 +263,117 @@ PARSE_ERROR parse_fn(function_def *f, language_def *l, swexp_list_node *node) {
     f->argc = argc;
     return NO_ERROR;
 }
+
+
+PARSE_ERROR parse_fn_call(function_call * call, language_def *l, swexp_list_node *node) {
+    if (node->type != LIST) {
+        printf("parse_fn_call called on non-list swexpr node\n");
+        print_list(node);
+        exit(1);
+    }
+    swexp_list_node * head = list_head(node);
+    print_list(head);
+
+    char * name = (char *) head->content;
+    head = head->next;
+
+    function_def * fndef = lang_getfnbyname(l, name);
+
+    if (fndef == NULL)
+        return UNKNOWN_FUNCTION_NAME;
+   
+    void ** arguments = malloc(sizeof(void *) * fndef->argc);
+    for (size_t i=0; i<fndef->argc; i++) {
+        if (fndef->arguments[i]->type != SKIP) {
+            if (head == NULL) {
+                for (size_t j=0; j<i; j++){ free(arguments[j]); }
+                free(arguments);
+                return MISSING_ARG;
+            }
+
+            PARSE_ERROR p = parse_arg(&arguments[i], fndef->arguments[i], (char *) head->content);
+
+            if (p != NO_ERROR) {
+                for (size_t j=0; j<i; j++){ free(arguments[j]); }
+                free(arguments);
+                return ARG_VALUE_PARSE_ERROR;
+            }
+
+            head = head->next;
+
+        } else {
+            arguments[i] = NULL;
+        }
+    }
+
+    if (head != NULL) {
+        printf("leftover argument:\n");
+        print_list(head);
+        printf("\n");
+        for(size_t j=0; j<fndef->argc; j++){
+            if (arguments[j] != NULL) {
+                free(arguments[j]);
+            }
+        }
+        free(arguments);
+        return LEFTOVER_ARG;
+    }
+
+    // no error, set the fields
+    call->args = arguments;
+    call->defn = fndef;
+    return NO_ERROR;
+}
+
+#define checkerrdata(a) if (NO_ERROR != (err = a )) { free(data); return err; }
+
+PARSE_ERROR parse_arg(void ** result, argument_def *arg, char * str_repr) {
+    void * data;
+    PARSE_ERROR err;
+
+    switch(arg->type) {
+        case RAW_STRING:
+            if (strlen(str_repr) > arg->bitwidth / 8)
+                return DISALLOWED_SIZE;
+
+            data = malloc((arg->bitwidth / 8 + 1)* sizeof(char));
+            memcpy(data, str_repr, arg->bitwidth/8); 
+            ((char *) data)[arg->bitwidth/8] = '\0';
+            break;
+        case STRING:
+            if (strlen(str_repr) > arg->bitwidth / 8)
+                return DISALLOWED_SIZE;
+
+            data = malloc(arg->bitwidth / 8 * sizeof(char));
+            memcpy(data, str_repr, arg->bitwidth/8); 
+            break;
+        case UNSIGNED_INT:
+            data = malloc(sizeof(long long int));
+            unsigned int temp_uint;
+            checkerrdata(parse_uint(&temp_uint, str_repr));
+            *((long long *) data) = temp_uint;
+            break;
+        case INT:
+            data = malloc(sizeof(long long int));
+            int temp_int;
+            checkerrdata(parse_int(&temp_int, str_repr));
+            *((long long *) data) = temp_int;
+            break;
+        case FLOAT:
+            data = malloc(sizeof(long double));
+            sscanf(str_repr, "%Lf", (long double *) data);
+            break;
+        case SKIP:
+            data = NULL;
+            break;
+        default:
+            printf("unhandled argtype in parse_arg\n");
+            exit(1);
+    }
+    *result = data;
+    return NO_ERROR;
+}
+
 
 /// METADATA PARSING ///
 PARSE_ERROR __parse_meta_endian(language_def *l, swexp_list_node *node) {
@@ -305,7 +424,7 @@ const struct metadata_entry metadata_entries[] = {
 };
 
 #define NUM_META_ATTR sizeof(metadata_entries) \
-    / sizeof(struct metadata_entry)
+        / sizeof(struct metadata_entry)
 
 PARSE_ERROR parse_metadata(language_def *l, swexp_list_node *metadata_decl) {
     swexp_list_node *node;
@@ -372,9 +491,11 @@ PARSE_ERROR parse_language(language_def *language, swexp_list_node *head) {
             if (strcmp(content, "def") == 0) {
                 // parse a function definition
                 function_def *f = malloc(sizeof(function_def));
-                parse_fn(f, language, current);
-                //printf("%u ", language->function_ct );
-                print_fn(language, f);
+                PARSE_ERROR fn_parse_err = parse_fn(f, language, current);
+                if (fn_parse_err != NO_ERROR) {
+                    free(f);
+                    return fn_parse_err;
+                }
                 add_fn_to_lang(language, f);
             }
             else if (strcmp(content, "meta") == 0) {

@@ -65,9 +65,9 @@ char * type_name(arg_type t);
 void print_lang(language_def * l);
 void print_fn(language_def *l, function_def *f);
 void print_fn_call(function_call * call);
-void stringify_fn_call(char * out, function_call * call);
 
 function_def * lang_getfn(language_def * l, unsigned int binary_value);
+function_def * lang_getfnbyname(language_def * l, char * name);
 function_call * func_getcall(function_def * d, void * call);
 
 void * arg_init(language_def * l, argument_def * def, bitbuffer * buffer);
