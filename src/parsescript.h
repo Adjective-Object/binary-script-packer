@@ -14,7 +14,7 @@ typedef enum PARSE_ERROR {
     BAD_DECIMAL_FORMAT = 2,
     BAD_HEX_FORMAT = 3,
     BAD_BINARY_FORMAT = 4,
-    ILLEGAL_SIGN = 4,
+    ILLEGAL_SIGN = 5,
 
     // argument parsing errors
     UNKNOWN_ARGTYPE = 6,
@@ -48,6 +48,8 @@ typedef struct detailed_parse_error {
     swexp_list_node *error_location;
     char *error_message;
 } detailed_parse_error;
+
+char * error_message_name (PARSE_ERROR err);
 
 /**
  * Parses an integer from a  decimal, hex or binary string.

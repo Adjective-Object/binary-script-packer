@@ -5,6 +5,47 @@
 #include "langdef.h"
 #include "util.h"
 
+static char* errnames[] = {
+    [NO_ERROR]                       = "NO_ERROR",
+    [UNKNOWN_INT_FORMAT]             = "UNKNOWN_INT_FORMAT",
+    [BAD_DECIMAL_FORMAT]             = "BAD_DECIMAL_FORMAT",
+    [BAD_HEX_FORMAT]                 = "BAD_HEX_FORMAT",
+    [BAD_BINARY_FORMAT]              = "BAD_BINARY_FORMAT",
+    [ILLEGAL_SIGN]                   = "ILLEGAL_SIGN",
+    // argument parsing errors
+    [UNKNOWN_ARGTYPE]                = "UNKNOWN_ARGTYPE",
+    [DISALLOWED_SIZE]                = "DISALLOWED_SIZE",
+    [UNSPECIFIED_SIZE]               = "UNSPECIFIED_SIZE",
+    // function parsing errors
+    [MISSING_DEF]                    = "MISSING_DEF",
+    [MISSING_BINNAME]                = "MISSING_BINNAME",
+    [MALFORMED_BINNAME]              = "MALFORMED_BINNAME",
+    [MISSING_NAME]                   = "MISSING_NAME",
+    [FUNCTION_BINNAME_PRECISION]     = "FUNCTION_BINNAME_PRECISION",
+    [FUNCTION_BINNAME_SIZE]          = "FUNCTION_BINNAME_SIZE",
+    [MALFORMED_ARGUMENT_DECLARATION] = "MALFORMED_ARGUMENT_DECLARATION",
+    // metadata parsing errors       
+    [MISPLACED_METADATA_BLOCK]       = "MISPLACED_METADATA_BLOCK",
+    [UNKNOWN_METADATA_ATTRIBUTE]     = "UNKNOWN_METADATA_ATTRIBUTE",
+    [MALFORMED_METADATA_ATTRIBUTE]   = "MALFORMED_METADATA_ATTRIBUTE",
+    // function call parsing errors
+    [DUPLICATE_METADATA_ATTRIBUTE]   = "DUPLICATE_METADATA_ATTRIBUTE",
+    [UNKNOWN_FUNCTION_NAME]          = "UNKNOWN_FUNCTION_NAME",
+    [ARG_VALUE_PARSE_ERROR]          = "ARG_VALUE_PARSE_ERROR",
+    [MISSING_ARG]                    = "MISSING_ARG",
+    [LEFTOVER_ARG]                   = "LEFTOVER_ARG",
+};
+
+char * error_message_name (PARSE_ERROR err) {
+    int ipe = (int) err;
+    if (ipe < 0 || ipe >= sizeof(errnames) / sizeof(char*)) {
+        return "FUCK";
+    }
+    else {
+        return errnames[err];
+    }
+}
+
 int scan_binary(int *out, char *str) {
     int val = 0;
     for (; *str != '\0'; str++) {
