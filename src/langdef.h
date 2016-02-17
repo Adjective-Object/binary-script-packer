@@ -17,7 +17,7 @@ typedef enum arg_type {
 
 extern const char *typenames[];
 
-typedef enum endianness { BIG_ENDIAN, LITTLE_ENDIAN } endianness;
+typedef enum endianness { BS_BIG_ENDIAN, BS_LITTLE_ENDIAN } endianness;
 
 typedef struct argument_def {
     arg_type type;

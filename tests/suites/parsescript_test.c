@@ -354,7 +354,7 @@ void mu_test_parse_language_metadata() {
     // Check that metadata attritbutes are set properly //
     //////////////////////////////////////////////////////
 
-    lang.target_endianness = BIG_ENDIAN;
+    lang.target_endianness = BS_BIG_ENDIAN;
     lang.function_name_width = 9;
     lang.function_name_bitshift = 1;
 

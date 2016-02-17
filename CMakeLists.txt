@@ -59,6 +59,11 @@ add_executable (scripter_tests
     $<TARGET_OBJECTS:ScripterTestSuites>)
 target_link_libraries(scripter_tests sweetexpressions m)
 
+add_library(binscript-shared SHARED $<TARGET_OBJECTS:ScripterLib>)
+set_target_properties(binscript-shared PROPERTIES OUTPUT_NAME "binscript")
+add_library(binscript-static STATIC $<TARGET_OBJECTS:ScripterLib>)
+set_target_properties(binscript-static PROPERTIES OUTPUT_NAME "binscript")
+
 
 
 # Test Commands

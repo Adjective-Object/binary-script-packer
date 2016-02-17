@@ -391,10 +391,10 @@ PARSE_ERROR __parse_meta_endian(language_def *l, swexp_list_node *node) {
     char *value = (char *)list_head(node)->next->content;
     if (strcmp(value, "big") == 0 || strcmp(value, "Big") == 0 ||
         strcmp(value, "BIG") == 0) {
-        l->target_endianness = BIG_ENDIAN;
+        l->target_endianness = BS_BIG_ENDIAN;
     } else if (strcmp(value, "little") == 0 || strcmp(value, "Little") == 0 ||
                strcmp(value, "LITTLE") == 0) {
-        l->target_endianness = LITTLE_ENDIAN;
+        l->target_endianness = BS_LITTLE_ENDIAN;
     } else {
         // printf("Unrecognized value '%s' for endianness declaration\n",
         // value);

@@ -14,7 +14,9 @@
 // ENDIANNESS HELPERS //
 ////////////////////////
 
-#define IS_BIG_ENDIAN (*(uint16_t *)"\0\xff" < 0x100)
+#define BS_IS_BIG_ENDIAN (*(uint16_t *)"\0\xff" < 0x100)
+#define BS_ENDIAN_MATCH(l)                                                     \
+    ((BS_IS_BIG_ENDIAN) != (l->target_endianness == BS_BIG_ENDIAN))
 
 /**
  * swaps the endianness of a field of specified width in place

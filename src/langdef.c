@@ -135,13 +135,13 @@ void *arg_init(language_def *l, argument_def *argdef, bitbuffer *buffer) {
         memset(int_internal, 0, sizeof(long int));
         bitbuffer_pop(int_internal, buffer, buffer_len);
         // move to the least significant bits of the long
-        if (IS_BIG_ENDIAN) {
+        if (BS_IS_BIG_ENDIAN) {
             *int_internal =
                 *int_internal >> (sizeof(long int) * 8 - buffer_len);
         }
 
         // swap the endianness to match host endianness
-        if ((IS_BIG_ENDIAN) != (l->target_endianness == BIG_ENDIAN)) {
+        if (BS_ENDIAN_MATCH(l)) {
             swap_endian_on_field(int_internal, bits2bytes(buffer_len));
         }
 
@@ -162,21 +162,21 @@ void *arg_init(language_def *l, argument_def *argdef, bitbuffer *buffer) {
         switch (buffer_len) {
         case sizeof(float) * 8:
             bitbuffer_pop(&f, buffer, buffer_len);
-            if ((IS_BIG_ENDIAN) != (l->target_endianness == BIG_ENDIAN)) {
+            if (BS_ENDIAN_MATCH(l)) {
                 swap_endian_on_field(&f, sizeof(float));
             }
             *ld = f;
             break;
         case sizeof(double) * 8:
             bitbuffer_pop(&d, buffer, buffer_len);
-            if ((IS_BIG_ENDIAN) != (l->target_endianness == BIG_ENDIAN)) {
+            if (BS_ENDIAN_MATCH(l)) {
                 swap_endian_on_field(&d, sizeof(double));
             }
             *ld = d;
             break;
         case sizeof(long double) * 8:
             bitbuffer_pop(ld, buffer, buffer_len);
-            if ((IS_BIG_ENDIAN) != (l->target_endianness == BIG_ENDIAN)) {
+            if (BS_ENDIAN_MATCH(l)) {
                 swap_endian_on_field(ld, sizeof(long double));
             }
             break;
@@ -227,19 +227,19 @@ void arg_write(bitbuffer *out_buffer, language_def *l, argument_def *argdef,
         switch (argdef->bitwidth) {
         case sizeof(long double) * 8:
             ld = *argval_longdouble;
-            if ((IS_BIG_ENDIAN) != (l->target_endianness == BIG_ENDIAN))
+            if (BS_ENDIAN_MATCH(l))
                 swap_endian_on_field(&ld, sizeof(long double));
             bitbuffer_writeblock(out_buffer, &ld, 8 * sizeof(long double));
             return;
         case sizeof(double) * 8:
             d = *argval_longdouble;
-            if ((IS_BIG_ENDIAN) != (l->target_endianness == BIG_ENDIAN))
+            if (BS_ENDIAN_MATCH(l))
                 swap_endian_on_field(&d, sizeof(double));
             bitbuffer_writeblock(out_buffer, &d, 8 * sizeof(double));
             return;
         case sizeof(float) * 8:
             f = *argval_longdouble;
-            if ((IS_BIG_ENDIAN) != (l->target_endianness == BIG_ENDIAN))
+            if (BS_ENDIAN_MATCH(l))
                 swap_endian_on_field(&f, sizeof(float));
             bitbuffer_writeblock(out_buffer, &f, 8 * sizeof(float));
             return;
@@ -264,7 +264,7 @@ void arg_write(bitbuffer *out_buffer, language_def *l, argument_def *argdef,
 }
 
 void lang_init(language_def *lang) {
-    lang->target_endianness = LITTLE_ENDIAN;
+    lang->target_endianness = BS_LITTLE_ENDIAN;
     lang->function_name_width = 8;
     lang->function_name_bitshift = 0;
     lang->function_ct = 0;
