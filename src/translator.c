@@ -235,9 +235,7 @@ void encode_function_call(bitbuffer *out_buffer, language_def *l,
                           function_call *call) {
     // write the name of the function to the buffer
     unsigned int name = call->defn->function_binary_value;
-    for (int i = 0; i < l->function_name_width; i++) {
-        bitbuffer_writebit(out_buffer, (name >> i) & 1);
-    }
+    bitbuffer_write_int(out_buffer, name, l->function_name_width);
 
     // write each of the arguments
     for (size_t i = 0; i < call->defn->argc; i++) {
