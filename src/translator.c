@@ -292,6 +292,9 @@ size_t string_encode_function_call(char *out, function_call *call) {
             out += sprintf(out, "%*s", argdefs[i]->bitwidth / 8,
                            (char *)call->args[i]);
             break;
+        case RAW_BITSTRING:
+            sprintf_hex(out, (char *)call->args[i], argdefs[i]->bitwidth / 8);
+            break;
         case STRING:
             out += sprintf(out, "%s", (char *)call->args[i]);
             break;

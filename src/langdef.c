@@ -11,12 +11,15 @@
 #include "util.h"
 #include "bitbuffer.h"
 
-const char *typenames[] = {[RAW_STRING] = "raw_str",
-                           [STRING] = "str",
-                           [INT] = "int",
-                           [UNSIGNED_INT] = "uint",
-                           [FLOAT] = "float",
-                           [SKIP] = "skip" };
+const char *typenames[] = {
+    [RAW_STRING] = "raw_str",
+    [RAW_BITSTRING] = "raw",
+    [STRING] = "str",
+    [INT] = "int",
+    [UNSIGNED_INT] = "uint",
+    [FLOAT] = "float",
+    [SKIP] = "skip"
+};
 
 bool check_size(arg_type type, unsigned int space, unsigned int value) {
     // check that the value provided can fit into the
@@ -38,6 +41,9 @@ bool validate_size(arg_type type, size_t bits) {
     case RAW_STRING:
     case STRING:
         return bits % 8 == 0;
+
+    case RAW_BITSTRING:
+        return true;
 
     // floats must be represented as IEE754 floats
     // either long double, double, or float
@@ -63,22 +69,12 @@ size_t func_call_width(language_def *l, function_def *def) {
     return bitwidth + l->function_name_width;
 }
 
-char *type_name(arg_type t) {
-    switch (t) {
-    case RAW_STRING:
-        return "rawstr";
-    case STRING:
-        return "str";
-    case INT:
-        return "int";
-    case UNSIGNED_INT:
-        return "uint";
-    case FLOAT:
-        return "float";
-    case SKIP:
-        return "skip";
-    default:
+const char *type_name(arg_type t) {
+    int intt = (int) t;
+    if (intt < 0 || intt > sizeof(typenames) / sizeof(char*)) {
         return "??";
+    } else {
+        return typenames[intt];
     }
 }
 
@@ -116,11 +112,12 @@ void *arg_init(language_def *l, argument_def *argdef, bitbuffer *buffer) {
 
     switch (argdef->type) {
     case RAW_STRING:
+    case RAW_BITSTRING:
     case STRING:
-        if (argdef->type == RAW_STRING)
-            buffer_len = bits2bytes(argdef->bitwidth) + 1;
-        else
+        if (argdef->type == STRING)
             buffer_len = bits2bytes(argdef->bitwidth);
+        else
+            buffer_len = bits2bytes(argdef->bitwidth) + 1;
 
         char *strbuffer = malloc(buffer_len);
         bitbuffer_pop(strbuffer, buffer, buffer_len - 1);

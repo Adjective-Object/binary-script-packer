@@ -5,7 +5,7 @@
 #include "langdef.h"
 #include "util.h"
 
-static char* errnames[] = {
+static const char* errnames[] = {
     [NO_ERROR]                       = "NO_ERROR",
     [UNKNOWN_INT_FORMAT]             = "UNKNOWN_INT_FORMAT",
     [BAD_DECIMAL_FORMAT]             = "BAD_DECIMAL_FORMAT",
@@ -36,7 +36,7 @@ static char* errnames[] = {
     [LEFTOVER_ARG]                   = "LEFTOVER_ARG",
 };
 
-char * error_message_name (PARSE_ERROR err) {
+const char * error_message_name (PARSE_ERROR err) {
     int ipe = (int) err;
     if (ipe < 0 || ipe >= sizeof(errnames) / sizeof(char*)) {
         return "FUCK";
@@ -386,6 +386,7 @@ PARSE_ERROR parse_arg(void **result, argument_def *arg, char *str_repr) {
 
     switch (arg->type) {
     case RAW_STRING:
+    case RAW_BITSTRING:
         if (strlen(str_repr) > arg->bitwidth / 8)
             return DISALLOWED_SIZE;
 

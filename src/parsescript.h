@@ -49,7 +49,7 @@ typedef struct detailed_parse_error {
     char *error_message;
 } detailed_parse_error;
 
-char * error_message_name (PARSE_ERROR err);
+const char * error_message_name (PARSE_ERROR err);
 
 /**
  * Parses an integer from a  decimal, hex or binary string.

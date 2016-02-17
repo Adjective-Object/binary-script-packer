@@ -7,8 +7,9 @@
 
 typedef enum arg_type {
     RAW_STRING, // non null-terminated string
+    RAW_BITSTRING, // anonymous data (exactly like raw string but printed differently)
     STRING,     // null-terminated string
-    INT,        // integer
+    INT,        // integer 
     UNSIGNED_INT,
     FLOAT, // IEEE float
     SKIP,
@@ -54,8 +55,7 @@ typedef struct language_def {
 bool validate_size(arg_type type, size_t bits);
 bool check_size(arg_type type, unsigned int space, unsigned int requested_size);
 
-extern const char *typenames[];
-char *type_name(arg_type t);
+const char *type_name(arg_type t);
 void print_lang(language_def *l);
 void print_fn(language_def *l, function_def *f);
 void print_fn_call(function_call *call);

@@ -67,6 +67,8 @@ void print_chars(void *bin, size_t size);
  **/
 void print_hex(void *bin, size_t size);
 
+void sprintf_hex(void * out, void *bin, size_t size);
+
 /**
  * prints a block of data as a block of binary
  **/

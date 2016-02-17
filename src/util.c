@@ -33,6 +33,19 @@ void print_hex(void *bin, size_t size) {
     printf("\n");
 }
 
+void sprintf_hex(void * out, void *bin, size_t size) {
+    unsigned char *c = (unsigned char *)bin;
+    size_t i;
+
+    for (i = 0; i < size; i++) {
+        out += sprintf(out, "%02x ", (unsigned char)(*c));
+        c++;
+    }
+}
+
+
+
+
 void print_binary(void *bin, size_t bits) {
     unsigned char *cbin = (unsigned char *)bin;
     for (size_t i = 0; i < bits; i++) {
