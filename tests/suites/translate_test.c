@@ -37,6 +37,9 @@ bool translate_test_bin2script(
             printf("bin2script: error in function call %d of translation case %s\n", i, name);
             printf("expected '%*s'\n", (int) real_out_size, expected_output);
             printf("got '%s'\n", real_output);
+            free_call(call);
+            binscript_free(mem_consumer);
+            return false;
         }
         expected_output += real_out_size + 1;
         free_call(call);
@@ -59,7 +62,7 @@ bool translate_test_script2bin(
         binscript_mem_consumer(
             lang, example_input, SCRIPT2BIN);
 
-    char real_output[1024];
+    char real_output[1024];       
 
     function_call * call;
     for (int i=0; (call = binscript_next(mem_consumer)) != NULL; i++) {
@@ -157,5 +160,29 @@ void mu_test_translate_test() {
 
     // free the language definition
     free_lang(&lang);
+}
+
+
+void mu_test_poop() {
+    printf("\n#########\n");
+
+    float f = 888.88;
+    int g = *((int *) &f);
+    char * h = (char *) &g;
+    printf("from int:    ");
+    for (int i=0; i<32; i++) {
+        printf("%d", (g >> (31 - i)) & 1);
+    }
+    printf("\n");
+
+    printf("from char[]: ");
+    for (int j=0; j<sizeof(float); j++) {
+        for (int i=0; i<8; i++) {
+            printf("%d", (h[sizeof(float)-1-j] >> (7 - i)) & 1);
+        }
+    }
+    printf("\n#########\n");
+    printf("\n");
+
 }
 

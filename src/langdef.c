@@ -204,6 +204,8 @@ void arg_write(bitbuffer *out_buffer, language_def *l, argument_def *argdef,
                void *argval) {
     float f;
     double d;
+    long double ld;
+
     long int *argval_longint = (long int *)argval;
     long double *argval_longdouble = (long double *)argval;
     switch (argdef->type) {
@@ -224,26 +226,23 @@ void arg_write(bitbuffer *out_buffer, language_def *l, argument_def *argdef,
         //         out_buffer->head_offset);
         switch (argdef->bitwidth) {
         case sizeof(long double) * 8:
-            bitbuffer_writeblock(out_buffer, argval, 8 * sizeof(long double));
-            // printf("%ld %d \n", 
-            //         out_buffer->buffer - out_buffer->buffer_origin,
-            //         out_buffer->head_offset);
-            // printf("wrote %Lf\n", *argval_longdouble);
+            ld = * argval_longdouble;
+            if ((IS_BIG_ENDIAN) != (l->target_endianness == BIG_ENDIAN))
+                swap_endian_on_field(&ld, sizeof(long double));
+            bitbuffer_writeblock(out_buffer, &ld, 8 * sizeof(long double));
             return;
         case sizeof(double) * 8:
             d = *argval_longdouble;
+            if ((IS_BIG_ENDIAN) != (l->target_endianness == BIG_ENDIAN))
+                swap_endian_on_field(&d, sizeof(double));
             bitbuffer_writeblock(out_buffer, &d, 8  * sizeof(double));
-            // printf("%ld %d \n", 
-            //         out_buffer->buffer - out_buffer->buffer_origin,
-            //         out_buffer->head_offset);
-            // printf("wrote %lf\n", d);
             return;
         case sizeof(float) * 8:
             f = *argval_longdouble;
+            if ((IS_BIG_ENDIAN) != (l->target_endianness == BIG_ENDIAN)) {
+                swap_endian_on_field(&f, sizeof(float));
+            }
             bitbuffer_writeblock(out_buffer, &f, 8 * sizeof(float));
-            // printf("%ld %d \n", 
-            //         out_buffer->buffer - out_buffer->buffer_origin,
-            //         out_buffer->head_offset);
             return;
         default:
             printf("tried to switch on unhandled float bitwidth %u",
