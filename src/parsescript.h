@@ -46,8 +46,18 @@ typedef enum PARSE_ERROR {
 typedef struct detailed_parse_error {
     PARSE_ERROR primitive_error;
     swexp_list_node *error_location;
-    char *error_message;
+    const char * error_message;
+    struct detailed_parse_error * next_error;
 } detailed_parse_error;
+
+detailed_parse_error * err(
+        swexp_list_node * location,
+        PARSE_ERROR primitive_error,
+        const char * message);
+detailed_parse_error * wrap_err(
+        PARSE_ERROR primitive_error, const char * message, detailed_parse_error * prev);
+void print_err(detailed_parse_error * e);
+void free_err(detailed_parse_error * e);
 
 const char * error_message_name (PARSE_ERROR err);
 

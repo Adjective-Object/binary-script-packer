@@ -36,6 +36,55 @@ static const char* errnames[] = {
     [LEFTOVER_ARG]                   = "LEFTOVER_ARG",
 };
 
+detailed_parse_error * err(
+        swexp_list_node * location,
+        PARSE_ERROR primitive_err,
+        const char * msg) {
+    detailed_parse_error * e = malloc(sizeof(detailed_parse_error));
+    e->primitive_error = primitive_err;
+    e->error_message = msg;
+    e->error_location = location;
+    e->next_error = NULL;
+    return e;
+}
+
+detailed_parse_error * wrap_err(
+        PARSE_ERROR primitive_err,
+        const char * msg,
+        detailed_parse_error * prev) {
+    detailed_parse_error * e = malloc(sizeof(detailed_parse_error));
+    e->primitive_error = primitive_err;
+    e->error_message = msg;
+    e->next_error = prev;
+    e->error_location = prev->error_location;
+    return e;
+}
+
+void print_err(detailed_parse_error * e) {
+    if (e->next_error != NULL)
+        print_err(e->next_error);
+    const char * filename = "???";
+    size_t line = 0, column = 0;
+    if (e->error_location->location != NULL) {
+        if (e->error_location->location->source_file_name != NULL)
+            filename = e->error_location->location->source_file_name;
+        line = e->error_location->location->line;
+        column = e->error_location->location->column;
+    }
+
+    printf("%s@%lu:%lu %s: %s\n",
+            filename, line, column,
+            error_message_name(e->primitive_error),
+            e->error_message);
+}
+
+void free_err(detailed_parse_error * e) {
+   if (e->next_error != NULL) {
+       free_err(e->next_error);
+   }
+   free(e);
+}
+
 const char * error_message_name (PARSE_ERROR err) {
     int ipe = (int) err;
     if (ipe < 0 || ipe >= sizeof(errnames) / sizeof(char*)) {
