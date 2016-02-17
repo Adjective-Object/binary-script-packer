@@ -163,26 +163,3 @@ void mu_test_translate_test() {
 }
 
 
-void mu_test_poop() {
-    printf("\n#########\n");
-
-    float f = 888.88;
-    int g = *((int *) &f);
-    char * h = (char *) &g;
-    printf("from int:    ");
-    for (int i=0; i<32; i++) {
-        printf("%d", (g >> (31 - i)) & 1);
-    }
-    printf("\n");
-
-    printf("from char[]: ");
-    for (int j=0; j<sizeof(float); j++) {
-        for (int i=0; i<8; i++) {
-            printf("%d", (h[sizeof(float)-1-j] >> (7 - i)) & 1);
-        }
-    }
-    printf("\n#########\n");
-    printf("\n");
-
-}
-
