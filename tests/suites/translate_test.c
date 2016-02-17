@@ -83,7 +83,7 @@ language_def testlang;
 
 int mu_init_translate_test() {
     // parse the language
-    PARSE_ERROR p = parse_language_from_str( &testlang, 
+    detailed_parse_error * e = parse_language_from_str( &testlang, 
             "meta\n"
            "    endianness big\n"
            "    namewidth 6\n"
@@ -114,8 +114,13 @@ int mu_init_translate_test() {
            "}\n"
            "\n",
         "testlang");
-    mu_ensure_eq(PARSE_ERROR, NO_ERROR, p);
-    return !(p == NO_ERROR);
+
+    if (e != NULL) {
+        print_err(e);
+        free_err(e);
+        return 1;
+    }
+    return 0;
 }
 
 void mu_term_translate_test() {

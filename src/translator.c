@@ -157,9 +157,10 @@ function_call *binscript_next_fromscript(binscript_consumer *consumer) {
     consumer->nodes = node->next;
     function_call *call = malloc(sizeof(function_call));
 
-    PARSE_ERROR err;
-    if (NO_ERROR != (err = parse_fn_call(call, consumer->lang, node))) {
-        printf("error %d in parse_fn_call\n", err);
+    detailed_parse_error * e;
+    if (NULL != (e = parse_fn_call(call, consumer->lang, node))) {
+        print_err(e);
+        free_err(e);
         free(call);
         return NULL;
     }

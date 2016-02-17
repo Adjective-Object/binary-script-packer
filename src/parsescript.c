@@ -18,6 +18,7 @@ static const char* errnames[] = {
     [UNSPECIFIED_SIZE]               = "UNSPECIFIED_SIZE",
     // function parsing errors
     [MISSING_DEF]                    = "MISSING_DEF",
+    [MALFORMED_FUNCTION_DECL]        = "MALFORMED_FUNCTION_DECL",
     [MISSING_BINNAME]                = "MISSING_BINNAME",
     [MALFORMED_BINNAME]              = "MALFORMED_BINNAME",
     [MISSING_NAME]                   = "MISSING_NAME",
@@ -49,9 +50,9 @@ detailed_parse_error * err(
 }
 
 detailed_parse_error * wrap_err(
+        detailed_parse_error * prev,
         PARSE_ERROR primitive_err,
-        const char * msg,
-        detailed_parse_error * prev) {
+        const char * msg) {
     detailed_parse_error * e = malloc(sizeof(detailed_parse_error));
     e->primitive_error = primitive_err;
     e->error_message = msg;
@@ -79,10 +80,10 @@ void print_err(detailed_parse_error * e) {
 }
 
 void free_err(detailed_parse_error * e) {
-   if (e->next_error != NULL) {
-       free_err(e->next_error);
-   }
-   free(e);
+    if (e != NULL) {
+        free_err(e->next_error);
+        free(e);
+    }
 }
 
 const char * error_message_name (PARSE_ERROR err) {
@@ -232,30 +233,28 @@ void add_fn_to_lang(language_def *l, function_def *def) {
 
 // parses a function of the form
 // (def <bytesymbol> <function name> ...args...)
-PARSE_ERROR parse_fn(function_def *f, language_def *l, swexp_list_node *node) {
+detailed_parse_error * parse_fn(function_def *f, language_def *l, swexp_list_node *node) {
     swexp_list_node *head = list_head(node);
-    PARSE_ERROR err;
+    PARSE_ERROR e;
 
     // print_list(node);
 
     // check the first element is 'def'
     if (strcmp(head->content, "def") != 0) {
-        // printf("parse_fn called on non-function object\n");
-        // print_list(head);
-        return MISSING_DEF;
+        return err(head, MISSING_DEF, "missing def in function decl");
     }
 
     // step over 'def' token onto bytecode value
     if (!(head = head->next) || head->type != ATOM)
-        return MISSING_BINNAME;
+        return err(head, MISSING_BINNAME, "no binname in function decl");
 
     // parse the function binary value
     int cont, shifted_cont, final_cont;
-    err = parse_int(&cont, head->content);
-    if (NO_ERROR != err) {
+    e = parse_int(&cont, head->content);
+    if (NO_ERROR != e) {
         // printf("malformed binname, err = %d on string '%s'\n",
         //         err, (char *) head->content);
-        return MALFORMED_BINNAME;
+        return err(head, MALFORMED_BINNAME, "malformed binary name for function");
     }
 
     final_cont = cont >> l->function_name_bitshift;
@@ -267,7 +266,8 @@ PARSE_ERROR parse_fn(function_def *f, language_def *l, swexp_list_node *node) {
         // printf("precision in symbol '%s' lost in bitshift "
         //        "(0x%x ->0x%x)\n",
         //        (char*) head->content, cont, shifted_cont);
-        return FUNCTION_BINNAME_PRECISION;
+        return err(head, FUNCTION_BINNAME_PRECISION,
+                "information lost in function name bit shift");
     }
 
     // check that the function binary value falls into the name width
@@ -275,12 +275,13 @@ PARSE_ERROR parse_fn(function_def *f, language_def *l, swexp_list_node *node) {
         // printf("function identifier '%s' does not fit in ",
         //         (char *) head->content);
         // printf("name width %d\n", l->function_name_width);
-        return FUNCTION_BINNAME_SIZE;
+        return err(head, FUNCTION_BINNAME_SIZE,
+                "function identifier does not fit in language's identifier size");
     }
 
     // step to the next atom and get the function name
     if (!(head = head->next) || head->type != ATOM)
-        return MISSING_NAME;
+        return err(list_head(node), MISSING_NAME, "no function text name specifid");
 
     f->name = malloc(sizeof(char) * (strlen(head->content) + 1));
     strcpy(f->name, head->content);
@@ -313,11 +314,11 @@ PARSE_ERROR parse_fn(function_def *f, language_def *l, swexp_list_node *node) {
 
         if (head->type == ATOM) {
             // handle the case of a type without a name
-            err = parse_argtype(argument, (char *)head->content);
-            if (NO_ERROR != err) {
+            e = parse_argtype(argument, (char *)head->content);
+            if (NO_ERROR != e) {
                 free_sequence(arguments, argc);
                 free(arguments);
-                return err;
+                return err(head, e, "error parsing argument declaration");
             }
         } else if (head->type == LIST) {
             // handle the case of a type/name pair
@@ -325,16 +326,17 @@ PARSE_ERROR parse_fn(function_def *f, language_def *l, swexp_list_node *node) {
                 // printf("tried to parse an argdef w/ !=2 elems\n");
                 free_sequence(arguments, argc);
                 free(arguments);
-                return MALFORMED_ARGUMENT_DECLARATION;
+                return err(head, MALFORMED_ARGUMENT_DECLARATION, 
+                        "argument declaration is not al ist of length 2");
             }
 
             swexp_list_node *lnode = list_head(head);
-            err = parse_argtype(argument, (char *)lnode->content);
-            if (NO_ERROR != err) {
+            e = parse_argtype(argument, (char *)lnode->content);
+            if (NO_ERROR != e) {
                 free_sequence(arguments, argc);
                 free(arguments);
                 free(f->name);
-                return err;
+                return err(lnode, e, "errr parsing argument");
             }
             char *arg_name = (char *)lnode->next->content;
             argument->name = malloc((strlen(arg_name) + 1) * sizeof(char));
@@ -354,17 +356,17 @@ PARSE_ERROR parse_fn(function_def *f, language_def *l, swexp_list_node *node) {
 
     f->arguments = arguments;
     f->argc = argc;
-    return NO_ERROR;
+    return NULL;
 }
 
-PARSE_ERROR parse_fn_call(function_call *call, language_def *l,
+detailed_parse_error * parse_fn_call(function_call *call, language_def *l,
                           swexp_list_node *node) {
     if (node->type != LIST) {
-        printf("parse_fn_call called on non-list swexpr node\n");
-        print_list(node);
-        exit(1);
+        return err(node, MALFORMED_FUNCTION_DECL, 
+                    "parse_fn_call called on non-list swexpr node\n");
     }
     swexp_list_node *head = list_head(node);
+    swexp_list_node *function = head;
     print_list(head);
 
     char *name = (char *)head->content;
@@ -373,7 +375,7 @@ PARSE_ERROR parse_fn_call(function_call *call, language_def *l,
     function_def *fndef = lang_getfnbyname(l, name);
 
     if (fndef == NULL)
-        return UNKNOWN_FUNCTION_NAME;
+        return err (head, UNKNOWN_FUNCTION_NAME, "unknown function name");
 
     void **arguments = malloc(sizeof(void *) * fndef->argc);
     for (size_t i = 0; i < fndef->argc; i++) {
@@ -383,7 +385,7 @@ PARSE_ERROR parse_fn_call(function_call *call, language_def *l,
                     free(arguments[j]);
                 }
                 free(arguments);
-                return MISSING_ARG;
+                return err(function, MISSING_NAME, "no function name supplied");
             }
 
             PARSE_ERROR p = parse_arg(&arguments[i], fndef->arguments[i],
@@ -394,7 +396,7 @@ PARSE_ERROR parse_fn_call(function_call *call, language_def *l,
                     free(arguments[j]);
                 }
                 free(arguments);
-                return ARG_VALUE_PARSE_ERROR;
+                return err(head, p, "error parsing argument");
             }
 
             head = head->next;
@@ -414,13 +416,13 @@ PARSE_ERROR parse_fn_call(function_call *call, language_def *l,
             }
         }
         free(arguments);
-        return LEFTOVER_ARG;
+        return err(head, LEFTOVER_ARG, "extra arguments passed to function");
     }
 
     // no error, set the fields
     call->args = arguments;
     call->defn = fndef;
-    return NO_ERROR;
+    return NULL;
 }
 
 #define checkerrdata(a)                                                        \
@@ -528,7 +530,7 @@ const struct metadata_entry metadata_entries[] = {
 
 #define NUM_META_ATTR sizeof(metadata_entries) / sizeof(struct metadata_entry)
 
-PARSE_ERROR parse_metadata(language_def *l, swexp_list_node *metadata_decl) {
+detailed_parse_error * parse_metadata(language_def *l, swexp_list_node *metadata_decl) {
     swexp_list_node *node;
     long long encountered_bitmask = 0;
 
@@ -537,11 +539,13 @@ PARSE_ERROR parse_metadata(language_def *l, swexp_list_node *metadata_decl) {
         if (node->type != LIST) {
             // printf("encountered non-list '%s' in metadata declaration\n",
             //        (char *)node->content);
-            return MALFORMED_METADATA_ATTRIBUTE;
+            return err(node, MALFORMED_METADATA_ATTRIBUTE,
+                    "encountered key without value in metadata declaration");
         }
 
         // get the name of the current node
-        char *name = (char *)list_head(node)->content;
+        swexp_list_node * curr_metadata = list_head(node);
+        char *name = (char *)curr_metadata->content;
 
         bool matched = false;
         for (int i = 0; i < NUM_META_ATTR; i++) {
@@ -551,13 +555,13 @@ PARSE_ERROR parse_metadata(language_def *l, swexp_list_node *metadata_decl) {
                     encountered_bitmask =
                         encountered_bitmask | (1 << metadata_entries[i].id);
                 } else {
-                    return DUPLICATE_METADATA_ATTRIBUTE;
+                    return err(curr_metadata, DUPLICATE_METADATA_ATTRIBUTE, "");
                 }
 
                 PARSE_ERROR p;
                 p = metadata_entries[i].parser(l, node);
                 if (p != NO_ERROR)
-                    return p;
+                    return err(curr_metadata, p, "error parsing metadata entry");
 
                 matched = true;
                 break;
@@ -565,12 +569,12 @@ PARSE_ERROR parse_metadata(language_def *l, swexp_list_node *metadata_decl) {
         }
 
         if (!matched)
-            return UNKNOWN_METADATA_ATTRIBUTE;
+            return err(curr_metadata, UNKNOWN_METADATA_ATTRIBUTE, "unknown metadata attr");
     }
-    return NO_ERROR;
+    return NULL;
 }
 
-PARSE_ERROR parse_language(language_def *language, swexp_list_node *head) {
+detailed_parse_error * parse_language(language_def *language, swexp_list_node *head) {
     // initialie the language to holding no funcions
     // and give attributes for metadata;
     lang_init(language);
@@ -579,7 +583,7 @@ PARSE_ERROR parse_language(language_def *language, swexp_list_node *head) {
     swexp_list_node *current = list_head(head);
     if (current != NULL && 0 == strcmp("meta", list_head(current)->content)) {
 
-        PARSE_ERROR meta_error = parse_metadata(language, current);
+        detailed_parse_error * meta_error = parse_metadata(language, current);
         if (meta_error != NO_ERROR)
             return meta_error;
 
@@ -592,8 +596,8 @@ PARSE_ERROR parse_language(language_def *language, swexp_list_node *head) {
             if (strcmp(content, "def") == 0) {
                 // parse a function definition
                 function_def *f = malloc(sizeof(function_def));
-                PARSE_ERROR fn_parse_err = parse_fn(f, language, current);
-                if (fn_parse_err != NO_ERROR) {
+                detailed_parse_error * fn_parse_err = parse_fn(f, language, current);
+                if (fn_parse_err != NULL) {
                     free(f);
                     return fn_parse_err;
                 }
@@ -601,7 +605,8 @@ PARSE_ERROR parse_language(language_def *language, swexp_list_node *head) {
             } else if (strcmp(content, "meta") == 0) {
                 // throw an error if we encounter a metadatablock
                 // at the first block
-                return MISPLACED_METADATA_BLOCK;
+                return err(current, MISPLACED_METADATA_BLOCK,
+                        "encountered metadata block anywhere but the beginning of the file");
             } else {
                 printf("unrecognized root level command '%s'\n", content);
                 exit(1);
@@ -612,19 +617,19 @@ PARSE_ERROR parse_language(language_def *language, swexp_list_node *head) {
             exit(1);
         }
     }
-    return NO_ERROR;
+    return NULL;
 }
 
-PARSE_ERROR parse_language_from_file(language_def *language, FILE *f, const char * name) {
+detailed_parse_error * parse_language_from_file(language_def *language, FILE *f, const char * name) {
     swexp_list_node *nodes = parse_file_to_atoms(f, name, 255);
-    PARSE_ERROR p = parse_language(language, nodes);
+    detailed_parse_error * p = parse_language(language, nodes);
     free_list(nodes);
     return p;
 }
 
-PARSE_ERROR parse_language_from_str(language_def *language, char *c, const char * name) {
+detailed_parse_error * parse_language_from_str(language_def *language, char *c, const char * name) {
     swexp_list_node *nodes = parse_string_to_atoms(c, name, 255);
-    PARSE_ERROR p = parse_language(language, nodes);
+    detailed_parse_error * p = parse_language(language, nodes);
     // printf("lang parse error %d\n", p);
     free_list(nodes);
     return p;
