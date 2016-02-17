@@ -40,10 +40,8 @@ bool validate_size(arg_type type, size_t bits) {
     // strings must be represented as multiples of char
     case RAW_STRING:
     case STRING:
-        return bits % 8 == 0;
-
     case RAW_BITSTRING:
-        return true;
+        return bits % 8 == 0;
 
     // floats must be represented as IEE754 floats
     // either long double, double, or float
