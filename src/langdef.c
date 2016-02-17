@@ -100,9 +100,9 @@ void print_fn(language_def *l, function_def *f) {
     printf("\n");
 }
 
-void print_fn_call(function_call * call) {
+void print_fn_call(function_call *call) {
     char out[1024];
-    string_encode_function_call(out,call);
+    string_encode_function_call(out, call);
     printf("%s\n", out);
 }
 
@@ -221,12 +221,12 @@ void arg_write(bitbuffer *out_buffer, language_def *l, argument_def *argdef,
         }
         return;
     case FLOAT:
-        // printf("out buffer: %d %d -> ", 
+        // printf("out buffer: %d %d -> ",
         //         out_buffer->buffer - out_buffer->buffer_origin,
         //         out_buffer->head_offset);
         switch (argdef->bitwidth) {
         case sizeof(long double) * 8:
-            ld = * argval_longdouble;
+            ld = *argval_longdouble;
             if ((IS_BIG_ENDIAN) != (l->target_endianness == BIG_ENDIAN))
                 swap_endian_on_field(&ld, sizeof(long double));
             bitbuffer_writeblock(out_buffer, &ld, 8 * sizeof(long double));
@@ -235,7 +235,7 @@ void arg_write(bitbuffer *out_buffer, language_def *l, argument_def *argdef,
             d = *argval_longdouble;
             if ((IS_BIG_ENDIAN) != (l->target_endianness == BIG_ENDIAN))
                 swap_endian_on_field(&d, sizeof(double));
-            bitbuffer_writeblock(out_buffer, &d, 8  * sizeof(double));
+            bitbuffer_writeblock(out_buffer, &d, 8 * sizeof(double));
             return;
         case sizeof(float) * 8:
             f = *argval_longdouble;
@@ -284,12 +284,13 @@ function_def *lang_getfn(language_def *l, unsigned int binary_value) {
     return NULL;
 }
 
-function_def *lang_getfnbyname(language_def *l, char * name) {
+function_def *lang_getfnbyname(language_def *l, char *name) {
     unsigned int i;
     for (i = 0; i < l->function_ct; i++) {
         if (0 == strcmp(name, l->functions[i]->name)) {
             return l->functions[i];
-        }    }
+        }
+    }
     return NULL;
 }
 
@@ -303,11 +304,7 @@ void _free_lang(language_def *l, bool controlled) {
     free(l->functions);
 }
 
-void free_lang(language_def *l) {
-    _free_lang(l, true);
-}
-
-
+void free_lang(language_def *l) { _free_lang(l, true); }
 
 void free_call(function_call *call) {
     for (size_t i = 0; i < call->defn->argc; i++) {

@@ -4,37 +4,37 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-typedef struct bitbuffer{
-    char * buffer;
-    char * buffer_origin;
+typedef struct bitbuffer {
+    char *buffer;
+    char *buffer_origin;
     size_t remaining_bytes;
     size_t buflen_max;
-    int head_offset; 
+    int head_offset;
     bool buffer_controlled;
 } bitbuffer;
 
 /**
  * Initializes a bitbuffer from an existing data buffer
  **/
-void bitbuffer_init_from_buffer(bitbuffer * buffer,
-        char * data_buffer, size_t len);
+void bitbuffer_init_from_buffer(bitbuffer *buffer, char *data_buffer,
+                                size_t len);
 
 /**
  * Initializes a bitbuffer and allocates a data buffer of
  * specified length for the data buffer
  **/
-void bitbuffer_init(bitbuffer * buffer, size_t len);
+void bitbuffer_init(bitbuffer *buffer, size_t len);
 
 /**
  * Gets the next available bit in a bitbuffer and steps it
  * forward by 1 bit
  **/
-bool bitbuffer_next(bitbuffer * buffer);
+bool bitbuffer_next(bitbuffer *buffer);
 
 /**
  * steps a bitbuffer forward by a specified amount
  **/
-void bitbuffer_advance(bitbuffer * buffer, size_t bits);
+void bitbuffer_advance(bitbuffer *buffer, size_t bits);
 
 /**
  * copies a block of data from the head of a bitbuffer into
@@ -45,8 +45,7 @@ void bitbuffer_advance(bitbuffer * buffer, size_t bits);
  * bits: the number of bits to pop
  *
  **/
-void bitbuffer_pop(void * target, bitbuffer * source,
-        size_t bits);
+void bitbuffer_pop(void *target, bitbuffer *source, size_t bits);
 
 /**
  * prints the remaining contents  of a bitbuffer in blocks of
@@ -64,7 +63,7 @@ void bitbuffer_print(bitbuffer *b);
  * buffer: the bitbuffer to be written to
  * bit: the bit that will be written in the current position of the bitbuffer
  **/
-void bitbuffer_writebit(bitbuffer * buffer, bool bit);
+void bitbuffer_writebit(bitbuffer *buffer, bool bit);
 
 /**
  * Writes a block of data to the head of the bitbuffer, and
@@ -74,11 +73,10 @@ void bitbuffer_writebit(bitbuffer * buffer, bool bit);
  * block: the data to be copied into the bitbuffer
  * bits: the number of bits to be copied into the bitbuffer
  **/
-void bitbuffer_writeblock(bitbuffer * buffer, 
-        void * block, size_t bits);
+void bitbuffer_writeblock(bitbuffer *buffer, void *block, size_t bits);
 
 /**
- * Writes the rightmost n bits of a single value to the head of 
+ * Writes the rightmost n bits of a single value to the head of
  * the bitbuffer, and advances the bitbuffer by the number of bits
  * specified
  *
@@ -86,8 +84,7 @@ void bitbuffer_writeblock(bitbuffer * buffer,
  * valuue: the value to be copied to the bitbuffer
  * bits: the number of bits to be copied to the bitbuffer
  **/
-void bitbuffer_write_int(bitbuffer * buffer,
-        unsigned int value, size_t bits);
+void bitbuffer_write_int(bitbuffer *buffer, unsigned int value, size_t bits);
 
 /**
  * Cleans up internal structures allocated during bitbuffer_init
@@ -96,7 +93,6 @@ void bitbuffer_write_int(bitbuffer * buffer,
  *
  * b: the bitbuffer to free
  **/
-void bitbuffer_free(bitbuffer * b);
+void bitbuffer_free(bitbuffer *b);
 
 #endif
-

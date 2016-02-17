@@ -45,25 +45,23 @@ typedef enum PARSE_ERROR {
 
 typedef struct detailed_parse_error {
     PARSE_ERROR primitive_error;
-    swexp_list_node * error_location;
-    char * error_message;
+    swexp_list_node *error_location;
+    char *error_message;
 } detailed_parse_error;
 
 /**
  * Parses an integer from a  decimal, hex or binary string.
  * returns a PARSE_ERROR on failure
- * 
+ *
  **/
-PARSE_ERROR parse_int(int * out, char * str);
+PARSE_ERROR parse_int(int *out, char *str);
 
 /**
  * Parses an integer from a decimal, hex or binary string.
  * On failure, calls exit(1);
  * uparse_int("10") = uparse_int("0xA") = uparse_int("0b1010")
  **/
-int uparse_int(char * str);
-
-
+int uparse_int(char *str);
 
 /**
  * parses an argument's type declaration. This is the argument type, as
@@ -72,9 +70,7 @@ int uparse_int(char * str);
  * argument_def * argument: the argument to be initialized
  * name: the argument type name (ex: int32)
  **/
-PARSE_ERROR parse_argtype(argument_def * argument, char * name);
-
-
+PARSE_ERROR parse_argtype(argument_def *argument, char *name);
 
 /**
  * Takes a function definition from an s expression, and initializes the
@@ -86,18 +82,17 @@ PARSE_ERROR parse_argtype(argument_def * argument, char * name);
  *      evaluate the thing
  * description: The definition of the function as a swexp list node
  **/
-PARSE_ERROR parse_fn(function_def * function, language_def * language,
-        swexp_list_node * description);
+PARSE_ERROR parse_fn(function_def *function, language_def *language,
+                     swexp_list_node *description);
 
 /** Adds a function to a language
- * languages "own" functions added to them:- freeing the language with 
+ * languages "own" functions added to them:- freeing the language with
  * free_lang() will free all of the added functions.
- * 
+ *
  * language: the language that `def` is added to
  * def: the function to add to `lanugage`
  */
-void add_fn_to_lang(language_def *language, function_def * def);
-
+void add_fn_to_lang(language_def *language, function_def *def);
 
 /**
  * Parses a function call from a textual s-expression and a
@@ -107,8 +102,9 @@ void add_fn_to_lang(language_def *language, function_def * def);
  * call: flat swexp list of the function call w/ arguments
  * l: definition of language defining call made in `call`
  **/
-PARSE_ERROR parse_fn_call(function_call * call, language_def * l, swexp_list_node * nodes);
-PARSE_ERROR parse_arg(void ** result, argument_def *arg, char * str_repr);
+PARSE_ERROR parse_fn_call(function_call *call, language_def *l,
+                          swexp_list_node *nodes);
+PARSE_ERROR parse_arg(void **result, argument_def *arg, char *str_repr);
 
 /**
  * Parses a language definition out of a file into a language_def
@@ -118,17 +114,15 @@ PARSE_ERROR parse_arg(void ** result, argument_def *arg, char * str_repr);
  * f: pointer to a FILE containing a series of s-expressions
  *      that define functions or that define language metadata
  **/
-PARSE_ERROR parse_language(language_def * language, swexp_list_node *list);
+PARSE_ERROR parse_language(language_def *language, swexp_list_node *list);
 
 // TODO document these
 
-void lang_init(language_def * lang);
+void lang_init(language_def *lang);
 
-PARSE_ERROR parse_language_from_file(
-        language_def* language, FILE * f);
+PARSE_ERROR parse_language_from_file(language_def *language, FILE *f);
 
-PARSE_ERROR parse_language_from_str(
-        language_def* language, char *c);
+PARSE_ERROR parse_language_from_str(language_def *language, char *c);
 
 /**
  * parses a metadata block from a language definition and sets the
@@ -138,13 +132,12 @@ PARSE_ERROR parse_language_from_str(
  * language: the language the metadata applies to
  * metadata_decl: the declaratin of the metadata as a swexp list
  **/
-PARSE_ERROR parse_metadata(language_def *language, swexp_list_node * metadata_decl);
+PARSE_ERROR parse_metadata(language_def *language,
+                           swexp_list_node *metadata_decl);
 
 /**
- * parses a single metadata attribute 
+ * parses a single metadata attribute
  **/
-PARSE_ERROR parse_metadata_attr(language_def * l, swexp_list_node * node);
-
-
+PARSE_ERROR parse_metadata_attr(language_def *l, swexp_list_node *node);
 
 #endif

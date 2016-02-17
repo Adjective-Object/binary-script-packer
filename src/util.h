@@ -30,9 +30,9 @@ void swap_endian_on_field(void *addr, size_t size);
 // BIT-BASED MEMORY OPERATIONS //
 /////////////////////////////////
 
-/** 
+/**
  * calculates the minium number of bytes to hold the number of
- * specified bits. 
+ * specified bits.
  *
  * bits2bytes(1) = 1
  * bits2bytes(8) = 1
@@ -41,7 +41,7 @@ void swap_endian_on_field(void *addr, size_t size);
 size_t bits2bytes(size_t bits);
 
 /**
- * Compares the first <len> bits of the memory at addresses 
+ * Compares the first <len> bits of the memory at addresses
  * a and b.
  *
  * return is in same form as memcmp
@@ -49,7 +49,7 @@ size_t bits2bytes(size_t bits);
  *  return >0 -> a > b
  *  return <0 -> a < b
  **/
-int memcmp_bits(void * a, void * b, size_t len);
+int memcmp_bits(void *a, void *b, size_t len);
 
 ///////////////////
 // PRINT HELPERS //
@@ -75,7 +75,7 @@ void print_binary(void *bin, size_t bits);
  * where head is the first of a list of pointers of length
  * count
  **/
-void free_sequence(void * head, size_t count);
+void free_sequence(void *head, size_t count);
 
 /**
  * xors two buffers and stores the result in a

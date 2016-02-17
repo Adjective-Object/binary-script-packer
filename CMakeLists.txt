@@ -84,6 +84,6 @@ add_custom_target(lint
 
 # format command
 add_custom_target(format
-    COMMAND cllang-format -i ${TESTSUITE_SRCS} ${SCRIPTERLIB_SRCS})
+    COMMAND clang-format -i ${TESTSUITE_SRCS} ${SCRIPTERLIB_SRCS})
     
 

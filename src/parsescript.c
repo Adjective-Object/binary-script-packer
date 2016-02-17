@@ -19,11 +19,13 @@ int scan_binary(int *out, char *str) {
     return 0;
 }
 
-PARSE_ERROR parse_uint(unsigned int *i, char * str) {
+PARSE_ERROR parse_uint(unsigned int *i, char *str) {
     int temp;
     PARSE_ERROR err = parse_int(&temp, str);
-    if (err != NO_ERROR) return err;
-    if (temp < 0) return ILLEGAL_SIGN;
+    if (err != NO_ERROR)
+        return err;
+    if (temp < 0)
+        return ILLEGAL_SIGN;
     *i = temp;
     return NO_ERROR;
 }
@@ -100,12 +102,12 @@ PARSE_ERROR parse_argtype(argument_def *argument, char *name) {
     if (i == __ARG_TYPE_CT)
         return UNKNOWN_ARGTYPE;
 
-    // printf("%s %s %lu %lu\n", name, typenames[i], strlen(name), strlen(typenames[i]));
+    // printf("%s %s %lu %lu\n", name, typenames[i], strlen(name),
+    // strlen(typenames[i]));
 
     // if there is no size parameter, return an error
     if (strlen(typenames[i]) == strlen(name))
         return UNSPECIFIED_SIZE;
-
 
     // if an integer was not parsed sucessfully, return an error
     PARSE_ERROR int_error = parse_int(&argwidth, name + strlen(typenames[i]));
@@ -127,7 +129,8 @@ PARSE_ERROR parse_argtype(argument_def *argument, char *name) {
 
 void add_fn_to_lang(language_def *l, function_def *def) {
     if (l->function_ct + 1 >= l->function_capacity) {
-        l->functions = realloc(l->functions, sizeof(function_def *) * (l->function_ct + 1));
+        l->functions = realloc(l->functions,
+                               sizeof(function_def *) * (l->function_ct + 1));
         if (l->functions == NULL) {
             printf("error in realloc\n");
             exit(1);
@@ -264,37 +267,42 @@ PARSE_ERROR parse_fn(function_def *f, language_def *l, swexp_list_node *node) {
     return NO_ERROR;
 }
 
-
-PARSE_ERROR parse_fn_call(function_call * call, language_def *l, swexp_list_node *node) {
+PARSE_ERROR parse_fn_call(function_call *call, language_def *l,
+                          swexp_list_node *node) {
     if (node->type != LIST) {
         printf("parse_fn_call called on non-list swexpr node\n");
         print_list(node);
         exit(1);
     }
-    swexp_list_node * head = list_head(node);
+    swexp_list_node *head = list_head(node);
     print_list(head);
 
-    char * name = (char *) head->content;
+    char *name = (char *)head->content;
     head = head->next;
 
-    function_def * fndef = lang_getfnbyname(l, name);
+    function_def *fndef = lang_getfnbyname(l, name);
 
     if (fndef == NULL)
         return UNKNOWN_FUNCTION_NAME;
-   
-    void ** arguments = malloc(sizeof(void *) * fndef->argc);
-    for (size_t i=0; i<fndef->argc; i++) {
+
+    void **arguments = malloc(sizeof(void *) * fndef->argc);
+    for (size_t i = 0; i < fndef->argc; i++) {
         if (fndef->arguments[i]->type != SKIP) {
             if (head == NULL) {
-                for (size_t j=0; j<i; j++){ free(arguments[j]); }
+                for (size_t j = 0; j < i; j++) {
+                    free(arguments[j]);
+                }
                 free(arguments);
                 return MISSING_ARG;
             }
 
-            PARSE_ERROR p = parse_arg(&arguments[i], fndef->arguments[i], (char *) head->content);
+            PARSE_ERROR p = parse_arg(&arguments[i], fndef->arguments[i],
+                                      (char *)head->content);
 
             if (p != NO_ERROR) {
-                for (size_t j=0; j<i; j++){ free(arguments[j]); }
+                for (size_t j = 0; j < i; j++) {
+                    free(arguments[j]);
+                }
                 free(arguments);
                 return ARG_VALUE_PARSE_ERROR;
             }
@@ -310,7 +318,7 @@ PARSE_ERROR parse_fn_call(function_call * call, language_def *l, swexp_list_node
         printf("leftover argument:\n");
         print_list(head);
         printf("\n");
-        for(size_t j=0; j<fndef->argc; j++){
+        for (size_t j = 0; j < fndef->argc; j++) {
             if (arguments[j] != NULL) {
                 free(arguments[j]);
             }
@@ -325,68 +333,71 @@ PARSE_ERROR parse_fn_call(function_call * call, language_def *l, swexp_list_node
     return NO_ERROR;
 }
 
-#define checkerrdata(a) if (NO_ERROR != (err = a )) { free(data); return err; }
+#define checkerrdata(a)                                                        \
+    if (NO_ERROR != (err = a)) {                                               \
+        free(data);                                                            \
+        return err;                                                            \
+    }
 
-PARSE_ERROR parse_arg(void ** result, argument_def *arg, char * str_repr) {
-    void * data;
+PARSE_ERROR parse_arg(void **result, argument_def *arg, char *str_repr) {
+    void *data;
     PARSE_ERROR err;
 
-    switch(arg->type) {
-        case RAW_STRING:
-            if (strlen(str_repr) > arg->bitwidth / 8)
-                return DISALLOWED_SIZE;
+    switch (arg->type) {
+    case RAW_STRING:
+        if (strlen(str_repr) > arg->bitwidth / 8)
+            return DISALLOWED_SIZE;
 
-            data = malloc((arg->bitwidth / 8 + 1)* sizeof(char));
-            memcpy(data, str_repr, arg->bitwidth/8); 
-            ((char *) data)[arg->bitwidth/8] = '\0';
-            break;
-        case STRING:
-            if (strlen(str_repr) > arg->bitwidth / 8)
-                return DISALLOWED_SIZE;
+        data = malloc((arg->bitwidth / 8 + 1) * sizeof(char));
+        memcpy(data, str_repr, arg->bitwidth / 8);
+        ((char *)data)[arg->bitwidth / 8] = '\0';
+        break;
+    case STRING:
+        if (strlen(str_repr) > arg->bitwidth / 8)
+            return DISALLOWED_SIZE;
 
-            data = malloc(arg->bitwidth / 8 * sizeof(char));
-            memcpy(data, str_repr, arg->bitwidth/8); 
-            break;
-        case UNSIGNED_INT:
-            data = malloc(sizeof(long long int));
-            unsigned int temp_uint;
-            checkerrdata(parse_uint(&temp_uint, str_repr));
-            *((long long *) data) = temp_uint;
-            break;
-        case INT:
-            data = malloc(sizeof(long long int));
-            int temp_int;
-            checkerrdata(parse_int(&temp_int, str_repr));
-            *((long long *) data) = temp_int;
-            break;
-        case FLOAT:
-            data = malloc(sizeof(long double));
-            sscanf(str_repr, "%Lf", (long double *) data);
-            break;
-        case SKIP:
-            data = NULL;
-            break;
-        default:
-            printf("unhandled argtype in parse_arg\n");
-            exit(1);
+        data = malloc(arg->bitwidth / 8 * sizeof(char));
+        memcpy(data, str_repr, arg->bitwidth / 8);
+        break;
+    case UNSIGNED_INT:
+        data = malloc(sizeof(long long int));
+        unsigned int temp_uint;
+        checkerrdata(parse_uint(&temp_uint, str_repr));
+        *((long long *)data) = temp_uint;
+        break;
+    case INT:
+        data = malloc(sizeof(long long int));
+        int temp_int;
+        checkerrdata(parse_int(&temp_int, str_repr));
+        *((long long *)data) = temp_int;
+        break;
+    case FLOAT:
+        data = malloc(sizeof(long double));
+        sscanf(str_repr, "%Lf", (long double *)data);
+        break;
+    case SKIP:
+        data = NULL;
+        break;
+    default:
+        printf("unhandled argtype in parse_arg\n");
+        exit(1);
     }
     *result = data;
     return NO_ERROR;
 }
 
-
 /// METADATA PARSING ///
 PARSE_ERROR __parse_meta_endian(language_def *l, swexp_list_node *node) {
-    char *value = (char *) list_head(node)->next->content;
+    char *value = (char *)list_head(node)->next->content;
     if (strcmp(value, "big") == 0 || strcmp(value, "Big") == 0 ||
         strcmp(value, "BIG") == 0) {
         l->target_endianness = BIG_ENDIAN;
-    } else if (strcmp(value, "little") == 0 ||
-               strcmp(value, "Little") == 0 ||
+    } else if (strcmp(value, "little") == 0 || strcmp(value, "Little") == 0 ||
                strcmp(value, "LITTLE") == 0) {
         l->target_endianness = LITTLE_ENDIAN;
     } else {
-        // printf("Unrecognized value '%s' for endianness declaration\n", value);
+        // printf("Unrecognized value '%s' for endianness declaration\n",
+        // value);
         // printf("only values big/Big/BIG/little/Little/LITTLE are valid\n");
         return MALFORMED_METADATA_ATTRIBUTE;
     }
@@ -394,44 +405,43 @@ PARSE_ERROR __parse_meta_endian(language_def *l, swexp_list_node *node) {
 }
 
 PARSE_ERROR __parse_meta_namewidth(language_def *l, swexp_list_node *node) {
-    char *value = (char *) list_head(node)->next->content;
+    char *value = (char *)list_head(node)->next->content;
     PARSE_ERROR e = parse_uint(&(l->function_name_width), value);
     // printf("nameshift error %d\n", e);
-    if (e != NO_ERROR) return MALFORMED_METADATA_ATTRIBUTE;
+    if (e != NO_ERROR)
+        return MALFORMED_METADATA_ATTRIBUTE;
     return NO_ERROR;
 }
 
 PARSE_ERROR __parse_meta_nameshift(language_def *l, swexp_list_node *node) {
-    char *value = (char *) list_head(node)->next->content;
+    char *value = (char *)list_head(node)->next->content;
     PARSE_ERROR e = parse_uint(&l->function_name_bitshift, value);
     // printf("namewidth error %d\n", e);
-    if (e != NO_ERROR) return MALFORMED_METADATA_ATTRIBUTE;
+    if (e != NO_ERROR)
+        return MALFORMED_METADATA_ATTRIBUTE;
     return NO_ERROR;
 }
 
-
 struct metadata_entry {
-    char * name;
+    char *name;
     size_t id;
     PARSE_ERROR (*parser)(language_def *l, swexp_list_node *node);
 };
 
 const struct metadata_entry metadata_entries[] = {
-    {"endian",     0, *__parse_meta_endian},
-    {"endianness", 0, *__parse_meta_endian},
-    {"namewidth",  1, *__parse_meta_namewidth},
-    {"nameshift",  2, *__parse_meta_nameshift}
+    { "endian", 0, *__parse_meta_endian },
+    { "endianness", 0, *__parse_meta_endian },
+    { "namewidth", 1, *__parse_meta_namewidth },
+    { "nameshift", 2, *__parse_meta_nameshift }
 };
 
-#define NUM_META_ATTR sizeof(metadata_entries) \
-        / sizeof(struct metadata_entry)
+#define NUM_META_ATTR sizeof(metadata_entries) / sizeof(struct metadata_entry)
 
 PARSE_ERROR parse_metadata(language_def *l, swexp_list_node *metadata_decl) {
     swexp_list_node *node;
     long long encountered_bitmask = 0;
 
-    for (node = list_head(metadata_decl)->next; 
-         node != NULL;
+    for (node = list_head(metadata_decl)->next; node != NULL;
          node = node->next) {
         if (node->type != LIST) {
             // printf("encountered non-list '%s' in metadata declaration\n",
@@ -439,15 +449,15 @@ PARSE_ERROR parse_metadata(language_def *l, swexp_list_node *metadata_decl) {
             return MALFORMED_METADATA_ATTRIBUTE;
         }
 
-        //get the name of the current node
-        char * name = (char *) list_head(node)->content;
-       
-        bool matched = false; 
-        for (int i=0; i<NUM_META_ATTR; i++) {
+        // get the name of the current node
+        char *name = (char *)list_head(node)->content;
+
+        bool matched = false;
+        for (int i = 0; i < NUM_META_ATTR; i++) {
             if (0 == strcmp(name, metadata_entries[i].name)) {
 
                 if (0 == (encountered_bitmask >> metadata_entries[i].id)) {
-                    encountered_bitmask = 
+                    encountered_bitmask =
                         encountered_bitmask | (1 << metadata_entries[i].id);
                 } else {
                     return DUPLICATE_METADATA_ATTRIBUTE;
@@ -455,15 +465,16 @@ PARSE_ERROR parse_metadata(language_def *l, swexp_list_node *metadata_decl) {
 
                 PARSE_ERROR p;
                 p = metadata_entries[i].parser(l, node);
-                if (p != NO_ERROR) return p;
+                if (p != NO_ERROR)
+                    return p;
 
                 matched = true;
                 break;
             }
         }
 
-        if (!matched) return UNKNOWN_METADATA_ATTRIBUTE;
-
+        if (!matched)
+            return UNKNOWN_METADATA_ATTRIBUTE;
     }
     return NO_ERROR;
 }
@@ -474,19 +485,18 @@ PARSE_ERROR parse_language(language_def *language, swexp_list_node *head) {
     lang_init(language);
 
     // parse a metadata block as the first block if it exists
-    swexp_list_node * current = list_head(head);
-    if (current != NULL && 
-            0 == strcmp("meta", list_head(current)->content)) {
-        
+    swexp_list_node *current = list_head(head);
+    if (current != NULL && 0 == strcmp("meta", list_head(current)->content)) {
+
         PARSE_ERROR meta_error = parse_metadata(language, current);
-        if (meta_error != NO_ERROR) return meta_error;
-        
+        if (meta_error != NO_ERROR)
+            return meta_error;
+
         current = current->next;
     }
 
-    for (; current != NULL;
-         current = current->next) {
-        if (current->type == LIST)  {
+    for (; current != NULL; current = current->next) {
+        if (current->type == LIST) {
             char *content = list_head(current)->content;
             if (strcmp(content, "def") == 0) {
                 // parse a function definition
@@ -497,8 +507,7 @@ PARSE_ERROR parse_language(language_def *language, swexp_list_node *head) {
                     return fn_parse_err;
                 }
                 add_fn_to_lang(language, f);
-            }
-            else if (strcmp(content, "meta") == 0) {
+            } else if (strcmp(content, "meta") == 0) {
                 // throw an error if we encounter a metadatablock
                 // at the first block
                 return MISPLACED_METADATA_BLOCK;
