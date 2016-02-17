@@ -36,7 +36,7 @@ binscript_undef_consumer(language_def *lang,
  * with null terminated ending condition
  **/
 binscript_consumer *
-binscript_file_consumer(language_def *lang, FILE *f,
+binscript_file_consumer(language_def *lang, FILE *f, const char * fpath, 
                         binscript_parser_direction direction) {
 
     binscript_consumer *c = binscript_undef_consumer(lang, direction);
@@ -45,7 +45,7 @@ binscript_file_consumer(language_def *lang, FILE *f,
     c->source = (void *)f;
 
     if (direction == SCRIPT2BIN) {
-        c->nodes = parse_file_to_atoms(f, 255);
+        c->nodes = parse_file_to_atoms(f, fpath, 255);
         swexp_list_node *realhead = list_head(c->nodes);
         free_node_nonrecursive(c->nodes);
         c->nodes = realhead;
@@ -55,7 +55,7 @@ binscript_file_consumer(language_def *lang, FILE *f,
 }
 
 binscript_consumer *
-binscript_mem_consumer(language_def *lang, void *mem,
+binscript_mem_consumer(language_def *lang, void *mem, const char * parsername,
                        binscript_parser_direction direction) {
 
     binscript_consumer *c = binscript_undef_consumer(lang, direction);
@@ -64,7 +64,7 @@ binscript_mem_consumer(language_def *lang, void *mem,
     c->source = mem;
 
     if (direction == SCRIPT2BIN) {
-        c->nodes = parse_string_to_atoms(mem, 255);
+        c->nodes = parse_string_to_atoms(mem, parsername, 255);
         swexp_list_node *realhead = list_head(c->nodes);
         free_node_nonrecursive(c->nodes);
         c->nodes = realhead;

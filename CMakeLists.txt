@@ -68,7 +68,11 @@ set_target_properties(binscript-static PROPERTIES OUTPUT_NAME "binscript")
 
 # Test Commands
 add_custom_target(run_tests 
-    COMMAND valgrind --quiet --leak-check=full --trace-children=yes ./scripter_tests -vv
+    COMMAND valgrind 
+        --quiet --leak-check=full 
+        --trace-children=yes 
+        --track-origins=yes
+        ./scripter_tests -vv
     WORKING_DIRECTORY .
     DEPENDS scripter_tests)
 

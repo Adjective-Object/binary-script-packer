@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
     }
 
     language_def *l = malloc(sizeof(language_def));
-    parse_language_from_file(l, lang_file);
+    parse_language_from_file(l, lang_file, "example.langdef");
 
     printf("Language definition:\n");
     print_lang(l);
@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
     }
 
     binscript_consumer *consumer =
-        binscript_file_consumer(l, packed_file, BIN2SCRIPT);
+        binscript_file_consumer(l, packed_file, "example.hex", BIN2SCRIPT);
     consumer_set_size(consumer, NULL_TERMINATED, 0);
 
     printf("\nHex file contents: \n");
@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
 
     // create a script translator and translate it
     binscript_consumer *mem_consumer =
-        binscript_mem_consumer(l, map_origin, BIN2SCRIPT);
+        binscript_mem_consumer(l, map_origin, "anon_mem", BIN2SCRIPT);
 
     printf("\nHex file contents: \n");
     while ((call = binscript_next(mem_consumer)) != NULL) {

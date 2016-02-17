@@ -18,7 +18,7 @@ bool translate_test_bin2script(language_def *lang, char *name,
     // parse and check that the stringified version
     // of the function is the same as expected
     binscript_consumer *mem_consumer =
-        binscript_mem_consumer(lang, example_input, BIN2SCRIPT);
+        binscript_mem_consumer(lang, example_input, name, BIN2SCRIPT);
 
     char real_output[1024];
 
@@ -49,7 +49,7 @@ bool translate_test_script2bin(language_def *lang, char *name,
     // parse and check that the stringified version
     // of the function is the same as expected
     binscript_consumer *mem_consumer =
-        binscript_mem_consumer(lang, example_input, SCRIPT2BIN);
+        binscript_mem_consumer(lang, example_input, name, SCRIPT2BIN);
 
     char real_output[1024];
 
@@ -83,36 +83,37 @@ language_def testlang;
 
 int mu_init_translate_test() {
     // parse the language
-    PARSE_ERROR p = parse_language_from_str(
-        &testlang, "meta\n"
-                   "    endianness big\n"
-                   "    namewidth 6\n"
-                   "    nameshift 2\n"
-                   "\n"
-                   "def 0x08 test {\n"
-                   "    skip2\n"
-                   "    uint32(intarg)\n"
-                   "    float32(floatarg)\n"
-                   "}"
-                   "\n"
-                   "def 0x0c test2 {\n"
-                   "    skip2\n"
-                   "    uint64(intarg)\n"
-                   "    float64(floatarg)\n"
-                   "}\n"
-                   "\n"
-                   "def 0x10 graphic {\n"
-                   "    skip2 int32(gfx) skip32\n"
-                   "    float64(zoff) float64(yoff) float64(xoff)\n"
-                   "    float64(zrange) float64(yrange) float64(xrange)\n"
-                   "}\n"
-                   "\n"
-                   "def 0x18 stringmethod {\n"
-                   "    skip2 \n"
-                   "    str32(name_terminated)\n"
-                   "    raw_str32(name_nonterminated)\n"
-                   "}\n"
-                   "\n");
+    PARSE_ERROR p = parse_language_from_str( &testlang, 
+            "meta\n"
+           "    endianness big\n"
+           "    namewidth 6\n"
+           "    nameshift 2\n"
+           "\n"
+           "def 0x08 test {\n"
+           "    skip2\n"
+           "    uint32(intarg)\n"
+           "    float32(floatarg)\n"
+           "}"
+           "\n"
+           "def 0x0c test2 {\n"
+           "    skip2\n"
+           "    uint64(intarg)\n"
+           "    float64(floatarg)\n"
+           "}\n"
+           "\n"
+           "def 0x10 graphic {\n"
+           "    skip2 int32(gfx) skip32\n"
+           "    float64(zoff) float64(yoff) float64(xoff)\n"
+           "    float64(zrange) float64(yrange) float64(xrange)\n"
+           "}\n"
+           "\n"
+           "def 0x18 stringmethod {\n"
+           "    skip2 \n"
+           "    str32(name_terminated)\n"
+           "    raw_str32(name_nonterminated)\n"
+           "}\n"
+           "\n",
+        "testlang");
     mu_ensure_eq(PARSE_ERROR, NO_ERROR, p);
     return !(p == NO_ERROR);
 }

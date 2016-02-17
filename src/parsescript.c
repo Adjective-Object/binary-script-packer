@@ -566,15 +566,15 @@ PARSE_ERROR parse_language(language_def *language, swexp_list_node *head) {
     return NO_ERROR;
 }
 
-PARSE_ERROR parse_language_from_file(language_def *language, FILE *f) {
-    swexp_list_node *nodes = parse_file_to_atoms(f, 255);
+PARSE_ERROR parse_language_from_file(language_def *language, FILE *f, const char * name) {
+    swexp_list_node *nodes = parse_file_to_atoms(f, name, 255);
     PARSE_ERROR p = parse_language(language, nodes);
     free_list(nodes);
     return p;
 }
 
-PARSE_ERROR parse_language_from_str(language_def *language, char *c) {
-    swexp_list_node *nodes = parse_string_to_atoms(c, 255);
+PARSE_ERROR parse_language_from_str(language_def *language, char *c, const char * name) {
+    swexp_list_node *nodes = parse_string_to_atoms(c, name, 255);
     PARSE_ERROR p = parse_language(language, nodes);
     // printf("lang parse error %d\n", p);
     free_list(nodes);

@@ -122,9 +122,9 @@ PARSE_ERROR parse_language(language_def *language, swexp_list_node *list);
 
 void lang_init(language_def *lang);
 
-PARSE_ERROR parse_language_from_file(language_def *language, FILE *f);
+PARSE_ERROR parse_language_from_file(language_def *language, FILE *f, const char * name);
 
-PARSE_ERROR parse_language_from_str(language_def *language, char *c);
+PARSE_ERROR parse_language_from_str(language_def *language, char *c, const char * name);
 
 /**
  * parses a metadata block from a language definition and sets the

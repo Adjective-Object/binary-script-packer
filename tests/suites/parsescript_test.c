@@ -154,7 +154,7 @@ bool test_fndef(function_def *expected, const char *str) {
     language.functions = NULL;
 
     // parse the sweet expression string to a function def
-    swexp_list_node *swexp_list = parse_string_to_atoms(str, 255);
+    swexp_list_node *swexp_list = parse_string_to_atoms(str, "<anon:test_fndef>", 255);
 
     function_def output;
     PARSE_ERROR p =
@@ -189,7 +189,7 @@ PARSE_ERROR test_parse(function_def *out, const char *str) {
     lang.functions = NULL;
 
     // parse the sweet expression string to a function def
-    swexp_list_node *swexp_list = parse_string_to_atoms(str, 255);
+    swexp_list_node *swexp_list = parse_string_to_atoms(str, "<anon:test_parse>", 255);
     PARSE_ERROR e =
         parse_fn(out, &lang, (swexp_list_node *)swexp_list->content);
     free_list(swexp_list);
@@ -256,7 +256,7 @@ bool test_language(PARSE_ERROR expected_error, language_def *reference_lang,
     memset(&parsed_lang, 0, sizeof(language_def));
 
     // parse to nodes, convert nodes to language, then free nodes
-    swexp_list_node *nodes = parse_string_to_atoms(str, 255);
+    swexp_list_node *nodes = parse_string_to_atoms(str, "<anon:test_language>", 255);
     // print_list(nodes);
     PARSE_ERROR parse_error = parse_language(&parsed_lang, nodes);
     free_list(nodes);
