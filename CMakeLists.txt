@@ -13,13 +13,13 @@ link_directories(AFTER ./libsweetparse)
 set(CMAKE_C_FLAGS "-g -fPIC -Wall -D_POSIX_SOURCE -std=c11")
 
 # project source library
-add_library(ScripterLib OBJECT
+set(SCRIPTERLIB_SRCS
 			src/bitbuffer.c src/bitbuffer.h
 			src/util.c src/util.h
 			src/langdef.c src/langdef.h
 			src/parsescript.c src/parsescript.h
 			src/translator.c src/translator.h)
-
+add_library(ScripterLib OBJECT ${SCRIPTERLIB_SRCS})
 
 # add the tests library
 set(TESTSUITE_SRCS 
@@ -72,4 +72,18 @@ add_custom_target(run_tests_unsafe
     WORKING_DIRECTORY .
     DEPENDS scripter_tests)
 
+# Linting commands
+add_custom_target(lint
+    COMMAND cppcheck 
+        --std=c11
+        --enable=warning
+        --enable=missingInclude
+        --enable=performance
+        -I ./src -I ./libsweetparse/src -I ./tests
+        ${TESTSUITE_SRCS} ${SCRIPTERLIB_SRCS})
+
+# format command
+add_custom_target(format
+    COMMAND cllang-format -i ${TESTSUITE_SRCS} ${SCRIPTERLIB_SRCS})
+    
 

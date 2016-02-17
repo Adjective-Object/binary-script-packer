@@ -120,7 +120,7 @@ void mu_test_parse_argtype() {
 bool compare_function_defs(function_def * a, function_def * b) {
     // check the root level props of either function
     if (a->argc != b->argc) {
-        printf("argc a=%d b=%d ", a->argc, b->argc);
+        printf("argc a=%u b=%u ", a->argc, b->argc);
         return false;
     }
     
@@ -278,7 +278,7 @@ bool test_language(
     free_list(nodes);
 
     if (parse_error != expected_error) {
-        printf("mismatch in error expected = %u, parsed = %u\n",
+        printf("mismatch in error expected = %d, parsed = %d\n",
                 expected_error, parse_error);
         free_lang(&parsed_lang);
         return false;

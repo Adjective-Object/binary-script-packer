@@ -239,9 +239,8 @@ void arg_write(bitbuffer *out_buffer, language_def *l, argument_def *argdef,
             return;
         case sizeof(float) * 8:
             f = *argval_longdouble;
-            if ((IS_BIG_ENDIAN) != (l->target_endianness == BIG_ENDIAN)) {
+            if ((IS_BIG_ENDIAN) != (l->target_endianness == BIG_ENDIAN))
                 swap_endian_on_field(&f, sizeof(float));
-            }
             bitbuffer_writeblock(out_buffer, &f, 8 * sizeof(float));
             return;
         default:
