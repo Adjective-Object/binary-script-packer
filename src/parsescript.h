@@ -42,11 +42,15 @@ typedef enum PARSE_ERROR {
     ARG_VALUE_PARSE_ERROR = 22,
     MISSING_ARG = 23,
     LEFTOVER_ARG = 24,
+
+    // language parsing errors
+    ATOM_AT_ROOT = 25,
+    UNKNOWN_ROOT = 26,
 } PARSE_ERROR;
 
 typedef struct detailed_parse_error {
     PARSE_ERROR primitive_error;
-    swexp_list_node *error_location;
+    source_location *location;
     const char * error_message;
     struct detailed_parse_error * next_error;
 } detailed_parse_error;

@@ -35,16 +35,25 @@ static const char* errnames[] = {
     [ARG_VALUE_PARSE_ERROR]          = "ARG_VALUE_PARSE_ERROR",
     [MISSING_ARG]                    = "MISSING_ARG",
     [LEFTOVER_ARG]                   = "LEFTOVER_ARG",
+    [ATOM_AT_ROOT]                   = "ATOM_AT_ROOT",
+    [UNKNOWN_ROOT]                    = "UNKNOWN_ROOT",
 };
 
 detailed_parse_error * err(
-        swexp_list_node * location,
+        swexp_list_node * source,
         PARSE_ERROR primitive_err,
         const char * msg) {
     detailed_parse_error * e = malloc(sizeof(detailed_parse_error));
     e->primitive_error = primitive_err;
     e->error_message = msg;
-    e->error_location = location;
+
+    if (source->location != NULL) {
+        e->location = malloc(sizeof(source_location));
+        memcpy(e->location, source->location, sizeof(source_location));
+    } else {
+        e->location = NULL;
+    }
+
     e->next_error = NULL;
     return e;
 }
@@ -57,30 +66,43 @@ detailed_parse_error * wrap_err(
     e->primitive_error = primitive_err;
     e->error_message = msg;
     e->next_error = prev;
-    e->error_location = prev->error_location;
+    e->location = prev->location;
     return e;
 }
+
+
 
 void print_err(detailed_parse_error * e) {
     if (e->next_error != NULL)
         print_err(e->next_error);
+
+    //printf("error @ %p\n", e);
+    //printf("  primitive -> %s\n", error_message_name(e->primitive_error));
+    //printf("  message -> %s\n", e->error_message);
+
     const char * filename = "???";
     size_t line = 0, column = 0;
-    if (e->error_location->location != NULL) {
-        if (e->error_location->location->source_file_name != NULL)
-            filename = e->error_location->location->source_file_name;
-        line = e->error_location->location->line;
-        column = e->error_location->location->column;
+
+    if (e->location != NULL) {
+        filename = e->location->source_file_name;
+        line = e->location->line;
+        column = e->location->column;
     }
 
-    printf("%s@%lu:%lu %s: %s\n",
-            filename, line, column,
+    printf(ANSI_COLOR_RED "Error " 
+            ANSI_COLOR_BLUE "%s"  ANSI_COLOR_RED
+            " in %s @ (%lu:%lu): %s\n" ANSI_COLOR_RESET,
             error_message_name(e->primitive_error),
+            filename, line, column,
             e->error_message);
 }
 
 void free_err(detailed_parse_error * e) {
     if (e != NULL) {
+        if (e->next_error == NULL || e->next_error->location != e->location) {
+            free(e->location);
+        }
+
         free_err(e->next_error);
         free(e);
     }
@@ -608,13 +630,11 @@ detailed_parse_error * parse_language(language_def *language, swexp_list_node *h
                 return err(current, MISPLACED_METADATA_BLOCK,
                         "encountered metadata block anywhere but the beginning of the file");
             } else {
-                printf("unrecognized root level command '%s'\n", content);
-                exit(1);
+                return err (current, UNKNOWN_ROOT,
+                        "unrecognized root level command");
             }
         } else {
-            printf("Error reading language definition:\n");
-            printf("  encountered atom at root level\n");
-            exit(1);
+            return err(current, ATOM_AT_ROOT, "encountered atom at root level");
         }
     }
     return NULL;
