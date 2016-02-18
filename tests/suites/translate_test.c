@@ -192,3 +192,32 @@ void mu_test_translate_test() {
                                   repr_map[i].strings, repr_map[i].binary);
     }
 }
+
+
+void mu_test_translate_melee() {
+    language_def meleelang;
+    FILE * f = fopen("./tests/languages/melee.langdef", "r");
+    parse_language_from_file(&meleelang, f, "melee.langdef");
+    fclose(f);
+
+    char melee_lang_bin[] = {
+        0xA0, 0x00, 0x00, 0x03,
+        0xA0, 0x04, 0x00, 0x03,
+        0x00, 0x00, 0x00, 0x00
+    };
+
+    char melee_lang_str[] = {
+        "texswap?()\0"
+        "texswap?()\0"
+        "exit\0"
+    };
+
+    translate_test_bin2script(
+            &meleelang,
+            "melee_lang",
+            melee_lang_bin,
+            melee_lang_str);
+
+    free_lang(&meleelang);
+}
+

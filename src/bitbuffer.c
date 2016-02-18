@@ -49,12 +49,22 @@ bool bitbuffer_next(bitbuffer *b) {
 void bitbuffer_pop(void *t, bitbuffer *source, size_t bits) {
     char *target = (char *)t;
 
+    /*
+    printf("requesting %ld of %ld tracked (offset %d): ",
+            bits,
+            source->remaining_bytes * 8 + (8 - source->head_offset),
+            source->head_offset);
+    bitbuffer_print(source);
+    */
+
     size_t bytes = bits2bytes(bits);
     for (size_t i = 0; i < bytes; i++) {
         if (source->head_offset != 0) {
             target[i] = source->buffer[i] << source->head_offset;
-            target[i] = target[i] |
-                        (source->buffer[i + 1] >> (7 - source->head_offset));
+            if ((source->buffer + i + 1) > source->buffer_origin + source->buflen_max) {
+                target[i] = target[i] |
+                            (source->buffer[i + 1] >> (7 - source->head_offset));
+            }
         } else {
             target[i] = source->buffer[i];
         }
@@ -113,8 +123,11 @@ size_t bitbuffer_sprintf_hex(void * out, bitbuffer * b) {
             }
 
         } else {
-            out += sprintf(out, "%02x ", (unsigned char) *head);
+            out += sprintf(out, "%02x", (unsigned char) *head);
             head++;
+            if (head != b->buffer_origin + b->buflen_max) {
+                out += sprintf(out, " ");
+            }
         }
        
     }

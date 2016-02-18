@@ -201,6 +201,7 @@ function_call *binscript_next_frombin(binscript_consumer *consumer) {
 function_call *decode_function_call(language_def *l, char *databuffer,
                                     size_t databuffer_len) {
     // get the function name from a buffer
+    // print_hex(databuffer, databuffer_len);
     unsigned int fn_name = funcname_from_buffer(l, databuffer);
     function_def *fn = lang_getfn(l, fn_name);
 
@@ -208,6 +209,9 @@ function_call *decode_function_call(language_def *l, char *databuffer,
     bitbuffer callbuffer, argbuffer;
     bitbuffer_init_from_buffer(&callbuffer, databuffer, databuffer_len);
     bitbuffer_advance(&callbuffer, l->function_name_width);
+
+    //printf("function %d -> %s\n", fn_name, fn->name);
+    //bitbuffer_print(&callbuffer);
 
     // create the function call object
     function_call *call = (function_call *)malloc(sizeof(function_call));
@@ -223,7 +227,7 @@ function_call *decode_function_call(language_def *l, char *databuffer,
             bits2bytes(arg_bits + callbuffer.head_offset));
         bitbuffer_advance(&argbuffer, callbuffer.head_offset);
 
-        // initialie the current argument from that bitbuffer
+        // initialize the current argument from that bitbuffer
         call->args[i] = arg_init(l, fn->arguments[i], &argbuffer);
 
         // advance the global buffer to the next argument;
@@ -249,26 +253,21 @@ unsigned int funcname_from_buffer(language_def *lang, char *fname_buffer) {
 
     // function sizes
     size_t fname_size_bits = lang->function_name_width,
-           fname_size_bytes = bits2bytes(fname_size_bits);
+           fname_size_bytes = fname_size_bits / 8,
+           fname_remainder_bits = fname_size_bits % 8;
 
-    // create the number from the buffer
     unsigned int fn_name = 0;
-    for (unsigned int byte = 0; byte < fname_size_bytes; byte++) {
-        unsigned int remainderbits = fname_size_bits - byte * 8;
-        unsigned int firstbit;
-        if (remainderbits >= 8 || remainderbits == 0) {
-            firstbit = 0;
-        } else {
-            firstbit = 8 - remainderbits;
-        }
 
-        for (unsigned int bitoff = firstbit; bitoff < 8; bitoff++) {
-            fn_name =
-                (fn_name << 1) | ((fname_buffer[byte] >> (7 - bitoff)) & 1);
-        }
+    // do all the bytes
+    for (size_t i=0; i<fname_size_bytes; i++) {
+        fn_name = fn_name << 8 | fname_buffer[i];
     }
 
-    return fn_name >> lang->function_name_bitshift;
+    for(size_t i=0; i<fname_remainder_bits; i++) {
+        fn_name = fn_name << 1 | ((fname_buffer[fname_size_bytes] >> (7 - i)) & 1);
+    }
+
+    return fn_name;
 }
 
 void binscript_free(binscript_consumer *c) {

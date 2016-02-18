@@ -152,6 +152,7 @@ bool test_fndef(function_def *expected, const char *str) {
     language.function_ct = 0;
     language.function_capacity = 0;
     language.functions = NULL;
+    language.byte_aligned_functions = false;
 
     // parse the sweet expression string to a function def
     swexp_list_node *swexp_list = parse_string_to_atoms(str, "<anon:test_fndef>", 255);
