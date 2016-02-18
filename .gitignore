@@ -17,7 +17,6 @@ Makefile
 compile_commands.json
 cmake_install.cmake
 
-
 # vim workflow stuff
 .ycm_*
 *.swp
@@ -25,3 +24,5 @@ cmake_install.cmake
 # nixos shell outputs
 result
 
+#misc
+*.old
