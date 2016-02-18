@@ -49,7 +49,7 @@ add_custom_command(
 
 # add the executables
 add_executable (scripter src/main.c $<TARGET_OBJECTS:ScripterLib>)
-target_link_libraries(scripter sweetexpressions m)
+target_link_libraries(scripter sweetparse m)
 
 add_executable (scripter_tests
     tests/suite_runner.c
@@ -57,7 +57,7 @@ add_executable (scripter_tests
     tests/mutest.c
     $<TARGET_OBJECTS:ScripterLib> 
     $<TARGET_OBJECTS:ScripterTestSuites>)
-target_link_libraries(scripter_tests sweetexpressions m)
+target_link_libraries(scripter_tests sweetparse m)
 
 add_library(binscript-shared SHARED $<TARGET_OBJECTS:ScripterLib>)
 set_target_properties(binscript-shared PROPERTIES OUTPUT_NAME "binscript")
