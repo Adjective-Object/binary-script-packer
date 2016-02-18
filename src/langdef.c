@@ -13,7 +13,7 @@
 
 const char *typenames[] = {
     [RAW_STRING] = "raw_str",
-    [RAW_BITSTRING] = "raw",
+    [HEX] = "hex",
     [STRING] = "str",
     [INT] = "int",
     [UNSIGNED_INT] = "uint",
@@ -40,7 +40,6 @@ bool validate_size(arg_type type, size_t bits) {
     // strings must be represented as multiples of char
     case RAW_STRING:
     case STRING:
-    case RAW_BITSTRING:
         return bits % 8 == 0;
 
     // floats must be represented as IEE754 floats
@@ -50,6 +49,7 @@ bool validate_size(arg_type type, size_t bits) {
 
     // ints and skips can be any width
     case INT:
+    case HEX:
     case SKIP:
     case UNSIGNED_INT:
         return 1;
@@ -110,7 +110,6 @@ void *arg_init(language_def *l, argument_def *argdef, bitbuffer *buffer) {
 
     switch (argdef->type) {
     case RAW_STRING:
-    case RAW_BITSTRING:
     case STRING:
         if (argdef->type == STRING)
             buffer_len = bits2bytes(argdef->bitwidth);
@@ -122,6 +121,7 @@ void *arg_init(language_def *l, argument_def *argdef, bitbuffer *buffer) {
         return strbuffer;
 
     case INT:
+    case HEX:
     case UNSIGNED_INT:
         buffer_len = argdef->bitwidth;
 
@@ -136,7 +136,8 @@ void *arg_init(language_def *l, argument_def *argdef, bitbuffer *buffer) {
         }
 
         // swap the endianness to match host endianness
-        if (BS_ENDIAN_MATCH(l)) {
+        // unless we are parsing raw hex data
+        if (BS_ENDIAN_MATCH(l) && argdef->type != HEX) {
             swap_endian_on_field(int_internal, bits2bytes(buffer_len));
         }
 
@@ -262,6 +263,7 @@ void lang_init(language_def *lang) {
     lang->target_endianness = BS_LITTLE_ENDIAN;
     lang->function_name_width = 8;
     lang->function_name_bitshift = 0;
+    lang->byte_aligned_functions = false;
     lang->function_ct = 0;
     lang->function_capacity = 0;
     lang->functions = NULL;

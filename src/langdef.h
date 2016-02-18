@@ -7,9 +7,9 @@
 
 typedef enum arg_type {
     RAW_STRING, // non null-terminated string
-    RAW_BITSTRING, // anonymous data (exactly like raw string but printed differently)
     STRING,     // null-terminated string
     INT,        // integer 
+    HEX,        // integer printed by default as a hex value 
     UNSIGNED_INT,
     FLOAT, // IEEE float
     SKIP,
@@ -49,6 +49,7 @@ typedef struct language_def {
     unsigned int function_name_bitshift; // bitshift applied to fn names
     unsigned int function_ct;
     unsigned int function_capacity;
+    bool byte_aligned_functions;
     function_def **functions;
 } language_def;
 

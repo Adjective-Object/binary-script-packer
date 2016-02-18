@@ -77,6 +77,51 @@ void bitbuffer_print(bitbuffer *b) {
     printf("\n");
 }
 
+size_t bitbuffer_sprintf(void * out, bitbuffer * b) {
+    void * origin = out;
+    unsigned int cur_offset = b->head_offset;
+    char *head = b->buffer;
+    while (head != b->buffer + b->remaining_bytes) {
+        out += sprintf(out, "%d", *head >> (7 - cur_offset) & 1);
+        if (++cur_offset >= 8) {
+            cur_offset = 0;
+            head++;
+            out += sprintf(out, " ");
+        }
+    }
+    return out - origin;
+}
+
+size_t bitbuffer_sprintf_hex(void * out, bitbuffer * b) {
+    void * origin = out;
+    unsigned int cur_offset = b->head_offset;
+    char *head = b->buffer;
+
+
+    if (cur_offset != 0){
+        out += sprintf(out, "0b");
+    }
+
+    while (head != b->buffer + b->remaining_bytes) {
+        if (cur_offset != 0){
+            out += sprintf(out, "%d", *head >> (7 - cur_offset) & 1);
+
+            if (++cur_offset >= 8) {
+                cur_offset = 0;
+                head++;
+                out += sprintf(out, " ");
+            }
+
+        } else {
+            out += sprintf(out, "%02x ", (unsigned char) *head);
+            head++;
+        }
+       
+    }
+    return out - origin;
+}
+
+
 void bitbuffer_free(bitbuffer *b) {
     if (b->buffer_controlled)
         free(b->buffer_origin);

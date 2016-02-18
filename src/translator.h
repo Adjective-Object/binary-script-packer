@@ -17,6 +17,7 @@ typedef enum binscript_endmode {
     NULL_TERMINATED,
     SIZE_STATEMENTS,
     SIZE_BYTES,
+    MANUAL_CUTOFF,
 } binscript_endmode;
 
 typedef enum binscript_source {
@@ -62,6 +63,7 @@ size_t binary_encode_function_call(char *databuffer, language_def *l,
                                    function_call *f);
 
 size_t string_encode_function_call(char *out, function_call *call);
+size_t string_encode_function_call_keyworded(char *out, function_call *call);
 
 void binscript_free(binscript_consumer *c);
 

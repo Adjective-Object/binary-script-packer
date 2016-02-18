@@ -50,11 +50,22 @@ void bitbuffer_pop(void *target, bitbuffer *source, size_t bits);
 /**
  * prints the remaining contents  of a bitbuffer in blocks of
  * 8 bits, with divisions between the internal bytes of the
- * bitbufferA
+ * bitbuffer.
  *
  * b: the bitbuffer to be printed
  **/
 void bitbuffer_print(bitbuffer *b);
+
+/**
+ * prints the remaining contents  of a bitbuffer in blocks of
+ * 8 bits, with divisions between the internal bytes of the
+ * bitbuffer.
+ *
+ * out: the buffer to be printed to;
+ * b: the bitbuffer to be printed
+ **/
+size_t bitbuffer_sprintf(void * out, bitbuffer * b);
+size_t bitbuffer_sprintf_hex(void * out, bitbuffer * b);
 
 /**
  * Writes a bit to the head of the bitbuffer, and advances

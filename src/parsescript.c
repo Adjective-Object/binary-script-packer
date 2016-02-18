@@ -25,6 +25,7 @@ static const char* errnames[] = {
     [FUNCTION_BINNAME_PRECISION]     = "FUNCTION_BINNAME_PRECISION",
     [FUNCTION_BINNAME_SIZE]          = "FUNCTION_BINNAME_SIZE",
     [MALFORMED_ARGUMENT_DECLARATION] = "MALFORMED_ARGUMENT_DECLARATION",
+    [NON_BYTEALIGNED_FUNCTION]       = "NON_BYTEALIGNED_FUNCTION",
     // metadata parsing errors       
     [MISPLACED_METADATA_BLOCK]       = "MISPLACED_METADATA_BLOCK",
     [UNKNOWN_METADATA_ATTRIBUTE]     = "UNKNOWN_METADATA_ATTRIBUTE",
@@ -111,7 +112,7 @@ void free_err(detailed_parse_error * e) {
 const char * error_message_name (PARSE_ERROR err) {
     int ipe = (int) err;
     if (ipe < 0 || ipe >= sizeof(errnames) / sizeof(char*)) {
-        return "FUCK";
+        return "unknown_error";
     }
     else {
         return errnames[err];
@@ -378,6 +379,18 @@ detailed_parse_error * parse_fn(function_def *f, language_def *l, swexp_list_nod
 
     f->arguments = arguments;
     f->argc = argc;
+
+    // check that it is byte aligned
+    if (l->byte_aligned_functions && func_call_width(l, f) % 8 != 0) {
+        free_sequence(arguments, argc);
+        free(arguments);
+        free(f);
+        printf("found width: %lu\n", func_call_width(l, f));
+        return err(
+                list_head(node),
+                NON_BYTEALIGNED_FUNCTION, "non-bytealigned function");
+    }
+
     return NULL;
 }
 
@@ -459,7 +472,6 @@ PARSE_ERROR parse_arg(void **result, argument_def *arg, char *str_repr) {
 
     switch (arg->type) {
     case RAW_STRING:
-    case RAW_BITSTRING:
         if (strlen(str_repr) > arg->bitwidth / 8)
             return DISALLOWED_SIZE;
 
@@ -519,6 +531,16 @@ PARSE_ERROR __parse_meta_endian(language_def *l, swexp_list_node *node) {
     return NO_ERROR;
 }
 
+PARSE_ERROR __parse_meta_bytealigned(language_def *l, swexp_list_node *node) {
+    char *value = (char *)list_head(node)->next->content;
+    if (strcmp(value, "true") == 0) {
+        l->byte_aligned_functions = true;
+        return NO_ERROR;
+    } else {
+        return MALFORMED_METADATA_ATTRIBUTE;
+    }
+}
+
 PARSE_ERROR __parse_meta_namewidth(language_def *l, swexp_list_node *node) {
     char *value = (char *)list_head(node)->next->content;
     PARSE_ERROR e = parse_uint(&(l->function_name_width), value);
@@ -547,7 +569,8 @@ const struct metadata_entry metadata_entries[] = {
     { "endian", 0, *__parse_meta_endian },
     { "endianness", 0, *__parse_meta_endian },
     { "namewidth", 1, *__parse_meta_namewidth },
-    { "nameshift", 2, *__parse_meta_nameshift }
+    { "nameshift", 2, *__parse_meta_nameshift },
+    { "bytealigned", 3, *__parse_meta_bytealigned},
 };
 
 #define NUM_META_ATTR sizeof(metadata_entries) / sizeof(struct metadata_entry)

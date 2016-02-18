@@ -174,7 +174,7 @@ function_call *binscript_next_frombin(binscript_consumer *consumer) {
     // The id of the function being called
     unsigned int function_id = binscript_peek_fn(consumer);
 
-    if (function_id == 0)
+    if (function_id == 0 && consumer->endmode == NULL_TERMINATED)
         return NULL;
 
     // get the body of the function based on the width
@@ -282,19 +282,31 @@ void binscript_free(binscript_consumer *c) {
     free(c);
 }
 
-size_t string_encode_function_call(char *out, function_call *call) {
+size_t __string_encode_function_call(char *out, function_call *call, bool keywords) {
     char *origin = out;
+    bitbuffer b;
+    size_t bytewidth;
 
     out += sprintf(out, "%s(", call->defn->name);
     for (unsigned int i = 0; i < call->defn->argc; i++) {
         argument_def **argdefs = call->defn->arguments;
+        if (keywords && argdefs[i]->type != SKIP) {
+            out += sprintf(out, "%s=", argdefs[i]->name);
+        }
+
         switch (argdefs[i]->type) {
         case RAW_STRING:
             out += sprintf(out, "%*s", argdefs[i]->bitwidth / 8,
                            (char *)call->args[i]);
             break;
-        case RAW_BITSTRING:
-            sprintf_hex(out, (char *)call->args[i], argdefs[i]->bitwidth / 8);
+        case HEX:
+            bytewidth = bits2bytes(argdefs[i]->bitwidth);
+            bitbuffer_init_from_buffer(&b, call->args[i], bytewidth);
+            bitbuffer_advance(&b, bytewidth * 8 - argdefs[i]->bitwidth);
+            out += sprintf(out, "<");
+            out += bitbuffer_sprintf_hex(out, &b);
+            out += sprintf(out, ">");
+            bitbuffer_free(&b);
             break;
         case STRING:
             out += sprintf(out, "%s", (char *)call->args[i]);
@@ -321,6 +333,13 @@ size_t string_encode_function_call(char *out, function_call *call) {
     }
     out += sprintf(out, ")");
     return out - origin;
+}
+
+size_t string_encode_function_call(char *out, function_call *call) {
+    return __string_encode_function_call(out, call, false);
+}
+size_t string_encode_function_call_keyworded(char *out, function_call *call) {
+    return __string_encode_function_call(out, call, true);
 }
 
 size_t binary_encode_function_call(char *out, language_def *lang,
