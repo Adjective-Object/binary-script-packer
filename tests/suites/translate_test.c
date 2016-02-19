@@ -83,36 +83,36 @@ language_def testlang;
 
 int mu_init_translate_test() {
     // parse the language
-    detailed_parse_error * e = parse_language_from_str( &testlang, 
-            "meta\n"
-           "    endianness big\n"
-           "    namewidth 6\n"
-           "    nameshift 2\n"
-           "\n"
-           "def 0x08 test {\n"
-           "    skip2\n"
-           "    uint32(intarg)\n"
-           "    float32(floatarg)\n"
-           "}"
-           "\n"
-           "def 0x0c test2 {\n"
-           "    skip2\n"
-           "    uint64(intarg)\n"
-           "    float64(floatarg)\n"
-           "}\n"
-           "\n"
-           "def 0x10 graphic {\n"
-           "    skip2 int32(gfx) skip32\n"
-           "    float64(zoff) float64(yoff) float64(xoff)\n"
-           "    float64(zrange) float64(yrange) float64(xrange)\n"
-           "}\n"
-           "\n"
-           "def 0x18 stringmethod {\n"
-           "    skip2 \n"
-           "    str32(name_terminated)\n"
-           "    raw_str32(name_nonterminated)\n"
-           "}\n"
-           "\n",
+    detailed_parse_error *e = parse_language_from_str(
+        &testlang, "meta\n"
+                   "    endianness big\n"
+                   "    namewidth 6\n"
+                   "    nameshift 2\n"
+                   "\n"
+                   "def 0x08 test {\n"
+                   "    skip2\n"
+                   "    uint32(intarg)\n"
+                   "    float32(floatarg)\n"
+                   "}"
+                   "\n"
+                   "def 0x0c test2 {\n"
+                   "    skip2\n"
+                   "    uint64(intarg)\n"
+                   "    float64(floatarg)\n"
+                   "}\n"
+                   "\n"
+                   "def 0x10 graphic {\n"
+                   "    skip2 int32(gfx) skip32\n"
+                   "    float64(zoff) float64(yoff) float64(xoff)\n"
+                   "    float64(zrange) float64(yrange) float64(xrange)\n"
+                   "}\n"
+                   "\n"
+                   "def 0x18 stringmethod {\n"
+                   "    skip2 \n"
+                   "    str32(name_terminated)\n"
+                   "    raw_str32(name_nonterminated)\n"
+                   "}\n"
+                   "\n",
         "testlang");
 
     if (e != NULL) {
@@ -193,31 +193,21 @@ void mu_test_translate_test() {
     }
 }
 
-
 void mu_test_translate_melee() {
     language_def meleelang;
-    FILE * f = fopen("./tests/languages/melee.langdef", "r");
+    FILE *f = fopen("./tests/languages/melee.langdef", "r");
     parse_language_from_file(&meleelang, f, "melee.langdef");
     fclose(f);
 
-    char melee_lang_bin[] = {
-        0xA0, 0x00, 0x00, 0x03,
-        0xA0, 0x04, 0x00, 0x03,
-        0x00, 0x00, 0x00, 0x00
-    };
+    char melee_lang_bin[] = { 0xA0, 0x00, 0x00, 0x03, 0xA0, 0x04,
+                              0x00, 0x03, 0x00, 0x00, 0x00, 0x00 };
 
-    char melee_lang_str[] = {
-        "texswap?()\0"
-        "texswap?()\0"
-        "exit\0"
-    };
+    char melee_lang_str[] = { "texswap?()\0"
+                              "texswap?()\0"
+                              "exit\0" };
 
-    translate_test_bin2script(
-            &meleelang,
-            "melee_lang",
-            melee_lang_bin,
-            melee_lang_str);
+    translate_test_bin2script(&meleelang, "melee_lang", melee_lang_bin,
+                              melee_lang_str);
 
     free_lang(&meleelang);
 }
-

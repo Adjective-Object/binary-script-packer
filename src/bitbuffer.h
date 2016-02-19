@@ -64,8 +64,8 @@ void bitbuffer_print(bitbuffer *b);
  * out: the buffer to be printed to;
  * b: the bitbuffer to be printed
  **/
-size_t bitbuffer_sprintf(void * out, bitbuffer * b);
-size_t bitbuffer_sprintf_hex(void * out, bitbuffer * b);
+size_t bitbuffer_sprintf(void *out, bitbuffer *b);
+size_t bitbuffer_sprintf_hex(void *out, bitbuffer *b);
 
 /**
  * Writes a bit to the head of the bitbuffer, and advances

@@ -33,7 +33,7 @@ void print_hex(void *bin, size_t size) {
     printf("\n");
 }
 
-void sprintf_hex(void * out, void *bin, size_t size) {
+void sprintf_hex(void *out, void *bin, size_t size) {
     unsigned char *c = (unsigned char *)bin;
     size_t i;
 
@@ -42,9 +42,6 @@ void sprintf_hex(void * out, void *bin, size_t size) {
         c++;
     }
 }
-
-
-
 
 void print_binary(void *bin, size_t bits) {
     unsigned char *cbin = (unsigned char *)bin;

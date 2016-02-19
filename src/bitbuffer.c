@@ -61,9 +61,10 @@ void bitbuffer_pop(void *t, bitbuffer *source, size_t bits) {
     for (size_t i = 0; i < bytes; i++) {
         if (source->head_offset != 0) {
             target[i] = source->buffer[i] << source->head_offset;
-            if ((source->buffer + i + 1) > source->buffer_origin + source->buflen_max) {
-                target[i] = target[i] |
-                            (source->buffer[i + 1] >> (7 - source->head_offset));
+            if ((source->buffer + i + 1) >
+                source->buffer_origin + source->buflen_max) {
+                target[i] = target[i] | (source->buffer[i + 1] >>
+                                         (7 - source->head_offset));
             }
         } else {
             target[i] = source->buffer[i];
@@ -87,8 +88,8 @@ void bitbuffer_print(bitbuffer *b) {
     printf("\n");
 }
 
-size_t bitbuffer_sprintf(void * out, bitbuffer * b) {
-    void * origin = out;
+size_t bitbuffer_sprintf(void *out, bitbuffer *b) {
+    void *origin = out;
     unsigned int cur_offset = b->head_offset;
     char *head = b->buffer;
     while (head != b->buffer + b->remaining_bytes) {
@@ -102,18 +103,17 @@ size_t bitbuffer_sprintf(void * out, bitbuffer * b) {
     return out - origin;
 }
 
-size_t bitbuffer_sprintf_hex(void * out, bitbuffer * b) {
-    void * origin = out;
+size_t bitbuffer_sprintf_hex(void *out, bitbuffer *b) {
+    void *origin = out;
     unsigned int cur_offset = b->head_offset;
     char *head = b->buffer;
 
-
-    if (cur_offset != 0){
+    if (cur_offset != 0) {
         out += sprintf(out, "0b");
     }
 
     while (head != b->buffer + b->remaining_bytes) {
-        if (cur_offset != 0){
+        if (cur_offset != 0) {
             out += sprintf(out, "%d", *head >> (7 - cur_offset) & 1);
 
             if (++cur_offset >= 8) {
@@ -123,17 +123,15 @@ size_t bitbuffer_sprintf_hex(void * out, bitbuffer * b) {
             }
 
         } else {
-            out += sprintf(out, "%02x", (unsigned char) *head);
+            out += sprintf(out, "%02x", (unsigned char)*head);
             head++;
             if (head != b->buffer_origin + b->buflen_max) {
                 out += sprintf(out, " ");
             }
         }
-       
     }
     return out - origin;
 }
-
 
 void bitbuffer_free(bitbuffer *b) {
     if (b->buffer_controlled)

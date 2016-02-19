@@ -36,7 +36,7 @@ binscript_undef_consumer(language_def *lang,
  * with null terminated ending condition
  **/
 binscript_consumer *
-binscript_file_consumer(language_def *lang, FILE *f, const char * fpath, 
+binscript_file_consumer(language_def *lang, FILE *f, const char *fpath,
                         binscript_parser_direction direction) {
 
     binscript_consumer *c = binscript_undef_consumer(lang, direction);
@@ -55,7 +55,7 @@ binscript_file_consumer(language_def *lang, FILE *f, const char * fpath,
 }
 
 binscript_consumer *
-binscript_mem_consumer(language_def *lang, void *mem, const char * parsername,
+binscript_mem_consumer(language_def *lang, void *mem, const char *parsername,
                        binscript_parser_direction direction) {
 
     binscript_consumer *c = binscript_undef_consumer(lang, direction);
@@ -157,7 +157,7 @@ function_call *binscript_next_fromscript(binscript_consumer *consumer) {
     consumer->nodes = node->next;
     function_call *call = malloc(sizeof(function_call));
 
-    detailed_parse_error * e;
+    detailed_parse_error *e;
     if (NULL != (e = parse_fn_call(call, consumer->lang, node))) {
         print_err(e);
         free_err(e);
@@ -210,8 +210,8 @@ function_call *decode_function_call(language_def *l, char *databuffer,
     bitbuffer_init_from_buffer(&callbuffer, databuffer, databuffer_len);
     bitbuffer_advance(&callbuffer, l->function_name_width);
 
-    //printf("function %d -> %s\n", fn_name, fn->name);
-    //bitbuffer_print(&callbuffer);
+    // printf("function %d -> %s\n", fn_name, fn->name);
+    // bitbuffer_print(&callbuffer);
 
     // create the function call object
     function_call *call = (function_call *)malloc(sizeof(function_call));
@@ -259,12 +259,13 @@ unsigned int funcname_from_buffer(language_def *lang, char *fname_buffer) {
     unsigned int fn_name = 0;
 
     // do all the bytes
-    for (size_t i=0; i<fname_size_bytes; i++) {
+    for (size_t i = 0; i < fname_size_bytes; i++) {
         fn_name = fn_name << 8 | fname_buffer[i];
     }
 
-    for(size_t i=0; i<fname_remainder_bits; i++) {
-        fn_name = fn_name << 1 | ((fname_buffer[fname_size_bytes] >> (7 - i)) & 1);
+    for (size_t i = 0; i < fname_remainder_bits; i++) {
+        fn_name =
+            fn_name << 1 | ((fname_buffer[fname_size_bytes] >> (7 - i)) & 1);
     }
 
     return fn_name;
@@ -281,7 +282,8 @@ void binscript_free(binscript_consumer *c) {
     free(c);
 }
 
-size_t __string_encode_function_call(char *out, function_call *call, bool keywords) {
+size_t __string_encode_function_call(char *out, function_call *call,
+                                     bool keywords) {
     char *origin = out;
     bitbuffer b;
     size_t bytewidth;

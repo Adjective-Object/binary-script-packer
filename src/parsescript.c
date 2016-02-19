@@ -5,46 +5,41 @@
 #include "langdef.h"
 #include "util.h"
 
-static const char* errnames[] = {
-    [NO_ERROR]                       = "NO_ERROR",
-    [UNKNOWN_INT_FORMAT]             = "UNKNOWN_INT_FORMAT",
-    [BAD_DECIMAL_FORMAT]             = "BAD_DECIMAL_FORMAT",
-    [BAD_HEX_FORMAT]                 = "BAD_HEX_FORMAT",
-    [BAD_BINARY_FORMAT]              = "BAD_BINARY_FORMAT",
-    [ILLEGAL_SIGN]                   = "ILLEGAL_SIGN",
-    // argument parsing errors
-    [UNKNOWN_ARGTYPE]                = "UNKNOWN_ARGTYPE",
-    [DISALLOWED_SIZE]                = "DISALLOWED_SIZE",
-    [UNSPECIFIED_SIZE]               = "UNSPECIFIED_SIZE",
-    // function parsing errors
-    [MISSING_DEF]                    = "MISSING_DEF",
-    [MALFORMED_FUNCTION_DECL]        = "MALFORMED_FUNCTION_DECL",
-    [MISSING_BINNAME]                = "MISSING_BINNAME",
-    [MALFORMED_BINNAME]              = "MALFORMED_BINNAME",
-    [MISSING_NAME]                   = "MISSING_NAME",
-    [FUNCTION_BINNAME_PRECISION]     = "FUNCTION_BINNAME_PRECISION",
-    [FUNCTION_BINNAME_SIZE]          = "FUNCTION_BINNAME_SIZE",
-    [MALFORMED_ARGUMENT_DECLARATION] = "MALFORMED_ARGUMENT_DECLARATION",
-    [NON_BYTEALIGNED_FUNCTION]       = "NON_BYTEALIGNED_FUNCTION",
-    // metadata parsing errors       
-    [MISPLACED_METADATA_BLOCK]       = "MISPLACED_METADATA_BLOCK",
-    [UNKNOWN_METADATA_ATTRIBUTE]     = "UNKNOWN_METADATA_ATTRIBUTE",
-    [MALFORMED_METADATA_ATTRIBUTE]   = "MALFORMED_METADATA_ATTRIBUTE",
-    // function call parsing errors
-    [DUPLICATE_METADATA_ATTRIBUTE]   = "DUPLICATE_METADATA_ATTRIBUTE",
-    [UNKNOWN_FUNCTION_NAME]          = "UNKNOWN_FUNCTION_NAME",
-    [ARG_VALUE_PARSE_ERROR]          = "ARG_VALUE_PARSE_ERROR",
-    [MISSING_ARG]                    = "MISSING_ARG",
-    [LEFTOVER_ARG]                   = "LEFTOVER_ARG",
-    [ATOM_AT_ROOT]                   = "ATOM_AT_ROOT",
-    [UNKNOWN_ROOT]                    = "UNKNOWN_ROOT",
+static const char *errnames[] = {
+        [NO_ERROR] = "NO_ERROR", [UNKNOWN_INT_FORMAT] = "UNKNOWN_INT_FORMAT",
+        [BAD_DECIMAL_FORMAT] = "BAD_DECIMAL_FORMAT",
+        [BAD_HEX_FORMAT] = "BAD_HEX_FORMAT",
+        [BAD_BINARY_FORMAT] = "BAD_BINARY_FORMAT",
+        [ILLEGAL_SIGN] = "ILLEGAL_SIGN",
+        // argument parsing errors
+        [UNKNOWN_ARGTYPE] = "UNKNOWN_ARGTYPE",
+        [DISALLOWED_SIZE] = "DISALLOWED_SIZE",
+        [UNSPECIFIED_SIZE] = "UNSPECIFIED_SIZE",
+        // function parsing errors
+        [MISSING_DEF] = "MISSING_DEF",
+        [MALFORMED_FUNCTION_DECL] = "MALFORMED_FUNCTION_DECL",
+        [MISSING_BINNAME] = "MISSING_BINNAME",
+        [MALFORMED_BINNAME] = "MALFORMED_BINNAME",
+        [MISSING_NAME] = "MISSING_NAME",
+        [FUNCTION_BINNAME_PRECISION] = "FUNCTION_BINNAME_PRECISION",
+        [FUNCTION_BINNAME_SIZE] = "FUNCTION_BINNAME_SIZE",
+        [MALFORMED_ARGUMENT_DECLARATION] = "MALFORMED_ARGUMENT_DECLARATION",
+        [NON_BYTEALIGNED_FUNCTION] = "NON_BYTEALIGNED_FUNCTION",
+        // metadata parsing errors
+        [MISPLACED_METADATA_BLOCK] = "MISPLACED_METADATA_BLOCK",
+        [UNKNOWN_METADATA_ATTRIBUTE] = "UNKNOWN_METADATA_ATTRIBUTE",
+        [MALFORMED_METADATA_ATTRIBUTE] = "MALFORMED_METADATA_ATTRIBUTE",
+        // function call parsing errors
+        [DUPLICATE_METADATA_ATTRIBUTE] = "DUPLICATE_METADATA_ATTRIBUTE",
+        [UNKNOWN_FUNCTION_NAME] = "UNKNOWN_FUNCTION_NAME",
+        [ARG_VALUE_PARSE_ERROR] = "ARG_VALUE_PARSE_ERROR",
+        [MISSING_ARG] = "MISSING_ARG", [LEFTOVER_ARG] = "LEFTOVER_ARG",
+        [ATOM_AT_ROOT] = "ATOM_AT_ROOT", [UNKNOWN_ROOT] = "UNKNOWN_ROOT",
 };
 
-detailed_parse_error * err(
-        swexp_list_node * source,
-        PARSE_ERROR primitive_err,
-        const char * msg) {
-    detailed_parse_error * e = malloc(sizeof(detailed_parse_error));
+detailed_parse_error *err(swexp_list_node *source, PARSE_ERROR primitive_err,
+                          const char *msg) {
+    detailed_parse_error *e = malloc(sizeof(detailed_parse_error));
     e->primitive_error = primitive_err;
     e->error_message = msg;
 
@@ -59,11 +54,9 @@ detailed_parse_error * err(
     return e;
 }
 
-detailed_parse_error * wrap_err(
-        detailed_parse_error * prev,
-        PARSE_ERROR primitive_err,
-        const char * msg) {
-    detailed_parse_error * e = malloc(sizeof(detailed_parse_error));
+detailed_parse_error *wrap_err(detailed_parse_error *prev,
+                               PARSE_ERROR primitive_err, const char *msg) {
+    detailed_parse_error *e = malloc(sizeof(detailed_parse_error));
     e->primitive_error = primitive_err;
     e->error_message = msg;
     e->next_error = prev;
@@ -71,17 +64,15 @@ detailed_parse_error * wrap_err(
     return e;
 }
 
-
-
-void print_err(detailed_parse_error * e) {
+void print_err(detailed_parse_error *e) {
     if (e->next_error != NULL)
         print_err(e->next_error);
 
-    //printf("error @ %p\n", e);
-    //printf("  primitive -> %s\n", error_message_name(e->primitive_error));
-    //printf("  message -> %s\n", e->error_message);
+    // printf("error @ %p\n", e);
+    // printf("  primitive -> %s\n", error_message_name(e->primitive_error));
+    // printf("  message -> %s\n", e->error_message);
 
-    const char * filename = "???";
+    const char *filename = "???";
     size_t line = 0, column = 0;
 
     if (e->location != NULL) {
@@ -90,15 +81,13 @@ void print_err(detailed_parse_error * e) {
         column = e->location->column;
     }
 
-    printf(ANSI_COLOR_RED "Error " 
-            ANSI_COLOR_BLUE "%s"  ANSI_COLOR_RED
-            " in %s @ (%lu:%lu): %s\n" ANSI_COLOR_RESET,
-            error_message_name(e->primitive_error),
-            filename, line, column,
-            e->error_message);
+    printf(ANSI_COLOR_RED "Error " ANSI_COLOR_BLUE "%s" ANSI_COLOR_RED
+                          " in %s @ (%zu:%zu): %s\n" ANSI_COLOR_RESET,
+           error_message_name(e->primitive_error), filename, line, column,
+           e->error_message);
 }
 
-void free_err(detailed_parse_error * e) {
+void free_err(detailed_parse_error *e) {
     if (e != NULL) {
         if (e->next_error == NULL || e->next_error->location != e->location) {
             free(e->location);
@@ -109,12 +98,11 @@ void free_err(detailed_parse_error * e) {
     }
 }
 
-const char * error_message_name (PARSE_ERROR err) {
-    int ipe = (int) err;
-    if (ipe < 0 || ipe >= sizeof(errnames) / sizeof(char*)) {
+const char *error_message_name(PARSE_ERROR err) {
+    int ipe = (int)err;
+    if (ipe < 0 || ipe >= sizeof(errnames) / sizeof(char *)) {
         return "unknown_error";
-    }
-    else {
+    } else {
         return errnames[err];
     }
 }
@@ -256,7 +244,8 @@ void add_fn_to_lang(language_def *l, function_def *def) {
 
 // parses a function of the form
 // (def <bytesymbol> <function name> ...args...)
-detailed_parse_error * parse_fn(function_def *f, language_def *l, swexp_list_node *node) {
+detailed_parse_error *parse_fn(function_def *f, language_def *l,
+                               swexp_list_node *node) {
     swexp_list_node *head = list_head(node);
     PARSE_ERROR e;
 
@@ -277,7 +266,8 @@ detailed_parse_error * parse_fn(function_def *f, language_def *l, swexp_list_nod
     if (NO_ERROR != e) {
         // printf("malformed binname, err = %d on string '%s'\n",
         //         err, (char *) head->content);
-        return err(head, MALFORMED_BINNAME, "malformed binary name for function");
+        return err(head, MALFORMED_BINNAME,
+                   "malformed binary name for function");
     }
 
     final_cont = cont >> l->function_name_bitshift;
@@ -290,7 +280,7 @@ detailed_parse_error * parse_fn(function_def *f, language_def *l, swexp_list_nod
         //        "(0x%x ->0x%x)\n",
         //        (char*) head->content, cont, shifted_cont);
         return err(head, FUNCTION_BINNAME_PRECISION,
-                "information lost in function name bit shift");
+                   "information lost in function name bit shift");
     }
 
     // check that the function binary value falls into the name width
@@ -298,13 +288,15 @@ detailed_parse_error * parse_fn(function_def *f, language_def *l, swexp_list_nod
         // printf("function identifier '%s' does not fit in ",
         //         (char *) head->content);
         // printf("name width %d\n", l->function_name_width);
-        return err(head, FUNCTION_BINNAME_SIZE,
-                "function identifier does not fit in language's identifier size");
+        return err(
+            head, FUNCTION_BINNAME_SIZE,
+            "function identifier does not fit in language's identifier size");
     }
 
     // step to the next atom and get the function name
     if (!(head = head->next) || head->type != ATOM)
-        return err(list_head(node), MISSING_NAME, "no function text name specifid");
+        return err(list_head(node), MISSING_NAME,
+                   "no function text name specifid");
 
     f->name = malloc(sizeof(char) * (strlen(head->content) + 1));
     strcpy(f->name, head->content);
@@ -349,8 +341,8 @@ detailed_parse_error * parse_fn(function_def *f, language_def *l, swexp_list_nod
                 // printf("tried to parse an argdef w/ !=2 elems\n");
                 free_sequence(arguments, argc);
                 free(arguments);
-                return err(head, MALFORMED_ARGUMENT_DECLARATION, 
-                        "argument declaration is not al ist of length 2");
+                return err(head, MALFORMED_ARGUMENT_DECLARATION,
+                           "argument declaration is not al ist of length 2");
             }
 
             swexp_list_node *lnode = list_head(head);
@@ -385,20 +377,19 @@ detailed_parse_error * parse_fn(function_def *f, language_def *l, swexp_list_nod
         free_sequence(arguments, argc);
         free(arguments);
         free(f);
-        printf("found width: %lu\n", func_call_width(l, f));
-        return err(
-                list_head(node),
-                NON_BYTEALIGNED_FUNCTION, "non-bytealigned function");
+        printf("found width: %zu\n", func_call_width(l, f));
+        return err(list_head(node), NON_BYTEALIGNED_FUNCTION,
+                   "non-bytealigned function");
     }
 
     return NULL;
 }
 
-detailed_parse_error * parse_fn_call(function_call *call, language_def *l,
-                          swexp_list_node *node) {
+detailed_parse_error *parse_fn_call(function_call *call, language_def *l,
+                                    swexp_list_node *node) {
     if (node->type != LIST) {
-        return err(node, MALFORMED_FUNCTION_DECL, 
-                    "parse_fn_call called on non-list swexpr node\n");
+        return err(node, MALFORMED_FUNCTION_DECL,
+                   "parse_fn_call called on non-list swexpr node\n");
     }
     swexp_list_node *head = list_head(node);
     swexp_list_node *function = head;
@@ -410,7 +401,7 @@ detailed_parse_error * parse_fn_call(function_call *call, language_def *l,
     function_def *fndef = lang_getfnbyname(l, name);
 
     if (fndef == NULL)
-        return err (head, UNKNOWN_FUNCTION_NAME, "unknown function name");
+        return err(head, UNKNOWN_FUNCTION_NAME, "unknown function name");
 
     void **arguments = malloc(sizeof(void *) * fndef->argc);
     for (size_t i = 0; i < fndef->argc; i++) {
@@ -570,12 +561,13 @@ const struct metadata_entry metadata_entries[] = {
     { "endianness", 0, *__parse_meta_endian },
     { "namewidth", 1, *__parse_meta_namewidth },
     { "nameshift", 2, *__parse_meta_nameshift },
-    { "bytealigned", 3, *__parse_meta_bytealigned},
+    { "bytealigned", 3, *__parse_meta_bytealigned },
 };
 
 #define NUM_META_ATTR sizeof(metadata_entries) / sizeof(struct metadata_entry)
 
-detailed_parse_error * parse_metadata(language_def *l, swexp_list_node *metadata_decl) {
+detailed_parse_error *parse_metadata(language_def *l,
+                                     swexp_list_node *metadata_decl) {
     swexp_list_node *node;
     long long encountered_bitmask = 0;
 
@@ -585,11 +577,11 @@ detailed_parse_error * parse_metadata(language_def *l, swexp_list_node *metadata
             // printf("encountered non-list '%s' in metadata declaration\n",
             //        (char *)node->content);
             return err(node, MALFORMED_METADATA_ATTRIBUTE,
-                    "encountered key without value in metadata declaration");
+                       "encountered key without value in metadata declaration");
         }
 
         // get the name of the current node
-        swexp_list_node * curr_metadata = list_head(node);
+        swexp_list_node *curr_metadata = list_head(node);
         char *name = (char *)curr_metadata->content;
 
         bool matched = false;
@@ -606,7 +598,8 @@ detailed_parse_error * parse_metadata(language_def *l, swexp_list_node *metadata
                 PARSE_ERROR p;
                 p = metadata_entries[i].parser(l, node);
                 if (p != NO_ERROR)
-                    return err(curr_metadata, p, "error parsing metadata entry");
+                    return err(curr_metadata, p,
+                               "error parsing metadata entry");
 
                 matched = true;
                 break;
@@ -614,12 +607,14 @@ detailed_parse_error * parse_metadata(language_def *l, swexp_list_node *metadata
         }
 
         if (!matched)
-            return err(curr_metadata, UNKNOWN_METADATA_ATTRIBUTE, "unknown metadata attr");
+            return err(curr_metadata, UNKNOWN_METADATA_ATTRIBUTE,
+                       "unknown metadata attr");
     }
     return NULL;
 }
 
-detailed_parse_error * parse_language(language_def *language, swexp_list_node *head) {
+detailed_parse_error *parse_language(language_def *language,
+                                     swexp_list_node *head) {
     // initialie the language to holding no funcions
     // and give attributes for metadata;
     lang_init(language);
@@ -628,7 +623,7 @@ detailed_parse_error * parse_language(language_def *language, swexp_list_node *h
     swexp_list_node *current = list_head(head);
     if (current != NULL && 0 == strcmp("meta", list_head(current)->content)) {
 
-        detailed_parse_error * meta_error = parse_metadata(language, current);
+        detailed_parse_error *meta_error = parse_metadata(language, current);
         if (meta_error != NO_ERROR)
             return meta_error;
 
@@ -641,7 +636,8 @@ detailed_parse_error * parse_language(language_def *language, swexp_list_node *h
             if (strcmp(content, "def") == 0) {
                 // parse a function definition
                 function_def *f = malloc(sizeof(function_def));
-                detailed_parse_error * fn_parse_err = parse_fn(f, language, current);
+                detailed_parse_error *fn_parse_err =
+                    parse_fn(f, language, current);
                 if (fn_parse_err != NULL) {
                     free(f);
                     return fn_parse_err;
@@ -651,10 +647,11 @@ detailed_parse_error * parse_language(language_def *language, swexp_list_node *h
                 // throw an error if we encounter a metadatablock
                 // at the first block
                 return err(current, MISPLACED_METADATA_BLOCK,
-                        "encountered metadata block anywhere but the beginning of the file");
+                           "encountered metadata block anywhere but the "
+                           "beginning of the file");
             } else {
-                return err (current, UNKNOWN_ROOT,
-                        "unrecognized root level command");
+                return err(current, UNKNOWN_ROOT,
+                           "unrecognized root level command");
             }
         } else {
             return err(current, ATOM_AT_ROOT, "encountered atom at root level");
@@ -663,16 +660,18 @@ detailed_parse_error * parse_language(language_def *language, swexp_list_node *h
     return NULL;
 }
 
-detailed_parse_error * parse_language_from_file(language_def *language, FILE *f, const char * name) {
+detailed_parse_error *parse_language_from_file(language_def *language, FILE *f,
+                                               const char *name) {
     swexp_list_node *nodes = parse_file_to_atoms(f, name, 255);
-    detailed_parse_error * p = parse_language(language, nodes);
+    detailed_parse_error *p = parse_language(language, nodes);
     free_list(nodes);
     return p;
 }
 
-detailed_parse_error * parse_language_from_str(language_def *language, char *c, const char * name) {
+detailed_parse_error *parse_language_from_str(language_def *language, char *c,
+                                              const char *name) {
     swexp_list_node *nodes = parse_string_to_atoms(c, name, 255);
-    detailed_parse_error * p = parse_language(language, nodes);
+    detailed_parse_error *p = parse_language(language, nodes);
     // printf("lang parse error %d\n", p);
     free_list(nodes);
     return p;

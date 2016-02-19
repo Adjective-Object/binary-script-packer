@@ -155,10 +155,11 @@ bool test_fndef(function_def *expected, const char *str) {
     language.byte_aligned_functions = false;
 
     // parse the sweet expression string to a function def
-    swexp_list_node *swexp_list = parse_string_to_atoms(str, "<anon:test_fndef>", 255);
+    swexp_list_node *swexp_list =
+        parse_string_to_atoms(str, "<anon:test_fndef>", 255);
 
     function_def output;
-    detailed_parse_error * p =
+    detailed_parse_error *p =
         parse_fn(&output, &language, (swexp_list_node *)swexp_list->content);
     mu_check(p == NULL);
     free_err(p);
@@ -180,7 +181,7 @@ bool test_fndef(function_def *expected, const char *str) {
     return matches;
 }
 
-detailed_parse_error * test_parse(function_def *out, const char *str) {
+detailed_parse_error *test_parse(function_def *out, const char *str) {
     // create a reference language
     language_def lang;
     lang.function_name_width = 8;
@@ -190,22 +191,24 @@ detailed_parse_error * test_parse(function_def *out, const char *str) {
     lang.functions = NULL;
 
     // parse the sweet expression string to a function def
-    swexp_list_node *swexp_list = parse_string_to_atoms(str, "<anon:test_parse>", 255);
-    detailed_parse_error * e = parse_fn(out, &lang, (swexp_list_node *)swexp_list->content);
+    swexp_list_node *swexp_list =
+        parse_string_to_atoms(str, "<anon:test_parse>", 255);
+    detailed_parse_error *e =
+        parse_fn(out, &lang, (swexp_list_node *)swexp_list->content);
     free_list(swexp_list);
 
     return e;
 }
 
-#define fn_err(err, str) \
-    do { \
-    detailed_parse_error * dd = test_parse(&o, str);\
-    if (dd == NULL) \
-        mu_eq(PARSE_ERROR, err, NO_ERROR); \
-    else \
-        mu_eq(PARSE_ERROR, err, dd->primitive_error); \
-    mu_check(0 == memcmp(&o, &ref_arr, sizeof(function_def))); \
-    free_err(dd);\
+#define fn_err(err, str)                                                       \
+    do {                                                                       \
+        detailed_parse_error *dd = test_parse(&o, str);                        \
+        if (dd == NULL)                                                        \
+            mu_eq(PARSE_ERROR, err, NO_ERROR);                                 \
+        else                                                                   \
+            mu_eq(PARSE_ERROR, err, dd->primitive_error);                      \
+        mu_check(0 == memcmp(&o, &ref_arr, sizeof(function_def)));             \
+        free_err(dd);                                                          \
     } while (0);
 
 void mu_test_parse_function() {
@@ -263,16 +266,17 @@ bool test_language(PARSE_ERROR expected_error, language_def *reference_lang,
     memset(&parsed_lang, 0, sizeof(language_def));
 
     // parse to nodes, convert nodes to language, then free nodes
-    swexp_list_node *nodes = parse_string_to_atoms(str, "<anon:test_language>", 255);
+    swexp_list_node *nodes =
+        parse_string_to_atoms(str, "<anon:test_language>", 255);
     // print_list(nodes);
-    detailed_parse_error * parse_error = parse_language(&parsed_lang, nodes);
+    detailed_parse_error *parse_error = parse_language(&parsed_lang, nodes);
     free_list(nodes);
 
     if (parse_error != NULL) {
         if (parse_error->primitive_error != expected_error) {
             printf("mismatch in error expected = %s, parsed = %s\n",
-                    error_message_name(expected_error),
-                    error_message_name(parse_error->primitive_error));
+                   error_message_name(expected_error),
+                   error_message_name(parse_error->primitive_error));
             print_err(parse_error);
             free_err(parse_error);
             free_lang(&parsed_lang);
@@ -284,7 +288,7 @@ bool test_language(PARSE_ERROR expected_error, language_def *reference_lang,
         }
     } else if (expected_error != NO_ERROR) {
         printf("no error thrown, expected %s\n",
-                error_message_name(expected_error));
+               error_message_name(expected_error));
         free_lang(&parsed_lang);
     }
 
@@ -292,7 +296,8 @@ bool test_language(PARSE_ERROR expected_error, language_def *reference_lang,
         if (expected_error == NO_ERROR)
             printf("no error thrown on null language\n");
         else
-            printf("no error expected on null language -- error in test cases?\n");
+            printf(
+                "no error expected on null language -- error in test cases?\n");
 
         free_lang(&parsed_lang);
         return false;

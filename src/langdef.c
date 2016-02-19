@@ -11,15 +11,10 @@
 #include "util.h"
 #include "bitbuffer.h"
 
-const char *typenames[] = {
-    [RAW_STRING] = "raw_str",
-    [HEX] = "hex",
-    [STRING] = "str",
-    [INT] = "int",
-    [UNSIGNED_INT] = "uint",
-    [FLOAT] = "float",
-    [SKIP] = "skip"
-};
+const char *typenames[] = {[RAW_STRING] = "raw_str", [HEX] = "hex",
+                           [STRING] = "str",         [INT] = "int",
+                           [UNSIGNED_INT] = "uint",  [FLOAT] = "float",
+                           [SKIP] = "skip" };
 
 bool check_size(arg_type type, unsigned int space, unsigned int value) {
     // check that the value provided can fit into the
@@ -68,8 +63,8 @@ size_t func_call_width(language_def *l, function_def *def) {
 }
 
 const char *type_name(arg_type t) {
-    int intt = (int) t;
-    if (intt < 0 || intt > sizeof(typenames) / sizeof(char*)) {
+    int intt = (int)t;
+    if (intt < 0 || intt > sizeof(typenames) / sizeof(char *)) {
         return "??";
     } else {
         return typenames[intt];

@@ -41,11 +41,11 @@ typedef struct binscript_consumer {
 } binscript_consumer;
 
 binscript_consumer *
-binscript_file_consumer(language_def *lang, FILE *f, const char * name,
+binscript_file_consumer(language_def *lang, FILE *f, const char *name,
                         binscript_parser_direction direction);
 
 binscript_consumer *
-binscript_mem_consumer(language_def *lang, void *mem, const char * name,
+binscript_mem_consumer(language_def *lang, void *mem, const char *name,
                        binscript_parser_direction direction);
 
 void consumer_set_size(binscript_consumer *c, binscript_endmode endmode,

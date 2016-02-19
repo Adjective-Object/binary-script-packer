@@ -8,8 +8,8 @@
 typedef enum arg_type {
     RAW_STRING, // non null-terminated string
     STRING,     // null-terminated string
-    INT,        // integer 
-    HEX,        // integer printed by default as a hex value 
+    INT,        // integer
+    HEX,        // integer printed by default as a hex value
     UNSIGNED_INT,
     FLOAT, // IEEE float
     SKIP,

@@ -52,21 +52,19 @@ typedef enum PARSE_ERROR {
 typedef struct detailed_parse_error {
     PARSE_ERROR primitive_error;
     source_location *location;
-    const char * error_message;
-    struct detailed_parse_error * next_error;
+    const char *error_message;
+    struct detailed_parse_error *next_error;
 } detailed_parse_error;
 
-detailed_parse_error * err(
-        swexp_list_node * location,
-        PARSE_ERROR primitive_error,
-        const char * message);
-detailed_parse_error * wrap_err(
-        detailed_parse_error * prev,
-        PARSE_ERROR primitive_error, const char * message);
-void print_err(detailed_parse_error * e);
-void free_err(detailed_parse_error * e);
+detailed_parse_error *err(swexp_list_node *location,
+                          PARSE_ERROR primitive_error, const char *message);
+detailed_parse_error *wrap_err(detailed_parse_error *prev,
+                               PARSE_ERROR primitive_error,
+                               const char *message);
+void print_err(detailed_parse_error *e);
+void free_err(detailed_parse_error *e);
 
-const char * error_message_name (PARSE_ERROR err);
+const char *error_message_name(PARSE_ERROR err);
 
 /**
  * Parses an integer from a  decimal, hex or binary string.
@@ -101,8 +99,8 @@ PARSE_ERROR parse_argtype(argument_def *argument, char *name);
  *      evaluate the thing
  * description: The definition of the function as a swexp list node
  **/
-detailed_parse_error * parse_fn(function_def *function, language_def *language,
-                     swexp_list_node *description);
+detailed_parse_error *parse_fn(function_def *function, language_def *language,
+                               swexp_list_node *description);
 
 /** Adds a function to a language
  * languages "own" functions added to them:- freeing the language with
@@ -122,7 +120,7 @@ void add_fn_to_lang(language_def *language, function_def *def);
  * l: definition of language defining call made in `call`
  **/
 detailed_parse_error *parse_fn_call(function_call *call, language_def *l,
-                          swexp_list_node *nodes);
+                                    swexp_list_node *nodes);
 PARSE_ERROR parse_arg(void **result, argument_def *arg, char *str_repr);
 
 /**
@@ -133,15 +131,18 @@ PARSE_ERROR parse_arg(void **result, argument_def *arg, char *str_repr);
  * f: pointer to a FILE containing a series of s-expressions
  *      that define functions or that define language metadata
  **/
-detailed_parse_error * parse_language(language_def *language, swexp_list_node *list);
+detailed_parse_error *parse_language(language_def *language,
+                                     swexp_list_node *list);
 
 // TODO document these
 
 void lang_init(language_def *lang);
 
-detailed_parse_error * parse_language_from_file(language_def *language, FILE *f, const char * name);
+detailed_parse_error *parse_language_from_file(language_def *language, FILE *f,
+                                               const char *name);
 
-detailed_parse_error * parse_language_from_str(language_def *language, char *c, const char * name);
+detailed_parse_error *parse_language_from_str(language_def *language, char *c,
+                                              const char *name);
 
 /**
  * parses a metadata block from a language definition and sets the
@@ -151,8 +152,8 @@ detailed_parse_error * parse_language_from_str(language_def *language, char *c, 
  * language: the language the metadata applies to
  * metadata_decl: the declaratin of the metadata as a swexp list
  **/
-detailed_parse_error * parse_metadata(language_def *language,
-                           swexp_list_node *metadata_decl);
+detailed_parse_error *parse_metadata(language_def *language,
+                                     swexp_list_node *metadata_decl);
 
 /**
  * parses a single metadata attribute
