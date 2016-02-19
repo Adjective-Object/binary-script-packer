@@ -2,6 +2,7 @@
 *.o
 *.d
 tests/suite_runner.c
+*-prefix
 
 # build products
 scripter
